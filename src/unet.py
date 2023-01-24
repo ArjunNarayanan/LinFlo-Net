@@ -1,43 +1,58 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as functional
+from src.unet_components import *
 
 
-class ConvINormConv(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
+class Unet(nn.Module):
+    def __init__(self, input_channels, first_layer_channels, downarm_channels, uparm_channels):
         super().__init__()
-        self.conv1 = nn.Conv3d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, bias=False)
-        self.norm1 = nn.InstanceNorm3d(out_channels)
-        self.activation = nn.LeakyReLU(inplace=True)
-        self.conv2 = nn.Conv3d(out_channels, out_channels, kernel_size=kernel_size, padding=padding, bias=False)
-        self.norm2 = nn.InstanceNorm3d(out_channels)
+        assert len(downarm_channels) == len(uparm_channels)
+        assert len(downarm_channels) > 1
 
-    def forward(self, x):
-        x = self.conv1(x)
-        x = self.norm1(x)
-        x = self.activation(x)
-        x = self.conv2(x)
-        x = self.norm2(x)
-        x = self.activation(x)
+        self.input_channels = input_channels
+        self.first_layer_channels = first_layer_channels
+        self.downarm_channels = downarm_channels
+        self.uparm_channels = uparm_channels
+
+        self.input_layer = ConvINormConv(input_channels, first_layer_channels)
+
+        in_channels = first_layer_channels
+        self.downarm = nn.ModuleList()
+        for nc in downarm_channels:
+            self.downarm.append(DownArm(in_channels, nc))
+            in_channels = nc
+
+        self.uparm = nn.ModuleList()
+        reverse_downarm_channels = downarm_channels[-1::-1]
+        prev_nc = reverse_downarm_channels[0]
+        for (idx, down_nc) in enumerate(reverse_downarm_channels[1:]):
+            inc = down_nc + prev_nc
+            outc = uparm_channels[idx]
+            self.uparm.append(UpArm(inc, outc))
+            prev_nc = outc
+
+        inc = first_layer_channels + prev_nc
+        outc = uparm_channels[-1]
+        self.uparm.append(UpArm(inc, outc))
+
+    def forward_downarm(self, x):
+        x = self.input_layer(x)
+        downarm_encodings = [x]
+        for layer in self.downarm:
+            x = layer(x)
+            downarm_encodings.append(x)
+        return downarm_encodings
+
+    def forward_uparm(self, downarm_encodings):
+        prev_x = downarm_encodings.pop()
+
+        assert len(downarm_encodings) == len(self.uparm)
+        for layer in self.uparm:
+            x = downarm_encodings.pop()
+            x = layer(prev_x, x)
+            prev_x = x
+
         return x
 
-
-class DownArm(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.down_sample = nn.Conv3d(in_channels, in_channels, kernel_size=3, padding=1, stride=2)
-        self.conv = ConvINormConv(in_channels, out_channels)
-
     def forward(self, x):
-        x = self.down_sample(x)
-        x = self.conv(x)
+        downarm_encodings = self.forward_downarm(x)
+        x = self.forward_uparm(downarm_encodings)
         return x
-
-
-class UpArm(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super().__init__()
-        self.up_sample = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
-        self.conv = ConvINormConv(in_channels, out_channels)
-
-    def forward(self, x):
