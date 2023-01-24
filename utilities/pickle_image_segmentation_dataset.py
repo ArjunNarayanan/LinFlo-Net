@@ -26,8 +26,8 @@ def get_segmentation(seg_fn, seg_labels):
     seg = io.read_image(seg_fn)
     assert seg.ndim == 3
     seg = relabel_segmentation(seg, seg_labels)
-    seg = func.one_hot(seg, num_classes=len(seg_labels))
-    seg = seg.permute([3, 0, 1, 2])
+    # seg = func.one_hot(seg, num_classes=len(seg_labels))
+    # seg = seg.permute([3, 0, 1, 2])
     return seg
 
 
