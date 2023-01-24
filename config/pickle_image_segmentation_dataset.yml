@@ -1,0 +1,3 @@
+input_folder: input
+output_folder: output
+seg_labels: [0,255,725,800]
