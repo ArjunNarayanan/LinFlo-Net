@@ -26,8 +26,6 @@ def get_segmentation(seg_fn, seg_labels):
     seg = io.read_image(seg_fn)
     assert seg.ndim == 3
     seg = relabel_segmentation(seg, seg_labels)
-    # seg = func.one_hot(seg, num_classes=len(seg_labels))
-    # seg = seg.permute([3, 0, 1, 2])
     return seg
 
 
@@ -85,10 +83,10 @@ if __name__ == "__main__":
     outfolder = config["output_folder"]
     seg_labels = config["seg_labels"]
 
-    # check_input_folders(infolder)
-    # make_output_folders(outfolder)
-    #
-    # index_file = os.path.join(infolder, "index.csv")
-    # index = pd.read_csv(index_file)
-    #
-    # pickle_all_data(infolder, index, outfolder, seg_labels)
+    check_input_folders(infolder)
+    make_output_folders(outfolder)
+
+    index_file = os.path.join(infolder, "index.csv")
+    index = pd.read_csv(index_file)
+
+    pickle_all_data(infolder, index, outfolder, seg_labels)
