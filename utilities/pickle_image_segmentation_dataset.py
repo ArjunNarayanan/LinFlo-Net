@@ -2,7 +2,7 @@ import sys
 import os
 import pickle
 import numpy as np
-import torch.nn.functional as func
+import torch
 import argparse
 import pandas as pd
 import yaml
@@ -12,10 +12,6 @@ import src.io_utils as io
 
 
 def relabel_segmentation(seg, classes):
-    seg_classes = np.unique(seg)
-    assert len(seg_classes) == len(classes)
-    assert all(seg_classes == classes)
-
     for (idx, c) in enumerate(classes):
         seg[seg == c] = idx
 
@@ -23,14 +19,24 @@ def relabel_segmentation(seg, classes):
 
 
 def get_segmentation(seg_fn, seg_labels):
-    seg = io.read_image(seg_fn)
-    assert seg.ndim == 3
-    seg = relabel_segmentation(seg, seg_labels)
+    num_classes = len(seg_labels)
+    
+    seg = get_image(seg_fn)
+    seg_classes = np.unique(seg)
+    assert len(seg_labels) == len(seg_classes)
+
+    if all(seg_classes == seg_labels):
+        seg = relabel_segmentation(seg, seg_labels)
+    else:
+        assert all(seg_classes == range(num_classes))
+
+    seg = seg.to(torch.long)
     return seg
 
 
 def get_image(img_fn):
     img = io.read_image(img_fn)
+    assert img.ndim == 3
     img = img.unsqueeze(0)
     return img
 
@@ -47,7 +53,7 @@ def pickle_image_and_segmentation(im_fn, seg_fn, seg_labels, out_fn):
 def pickle_all_data(root_dir, filename_index, outdir, seg_labels):
     for idx in range(len(filename_index)):
         filename = filename_index.iloc[idx, 0]
-        print("Pickling filename : ", filename)
+        print("Pickling file : ", filename)
 
         im_fn = os.path.join(root_dir, "vtk_image", filename + ".vti")
         seg_fn = os.path.join(root_dir, "vtk_segmentation", filename + ".vti")
@@ -66,7 +72,7 @@ def make_output_folders(outdir):
     if not os.path.isdir(outdir):
         os.makedirs(outdir)
     else:
-        print("WARNING - output folder already exists, data will be overwritten")
+        print("\n\nWARNING - output folder already exists, data will be overwritten\n\n")
 
 
 if __name__ == "__main__":

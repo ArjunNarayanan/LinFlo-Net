@@ -10,7 +10,7 @@ class DiceLoss(_Loss):
 
     def forward(self, prediction, ground_truth):
         assert prediction.ndim == 5
-        assert ground_truth.ndim == 4
+        assert ground_truth.ndim == 4, "Ground truth ndim : " + str(ground_truth.ndim)
         assert ground_truth.shape[0] == prediction.shape[0]
         assert prediction.shape[2:] == ground_truth.shape[1:]
         assert ground_truth.dtype == torch.long

@@ -1,3 +1,3 @@
-input_folder: input
-output_folder: output
-seg_labels: [0,255,725,800]
+input_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
+output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train/data
+seg_labels: [0, 205, 420, 500, 550, 600, 820, 850]
