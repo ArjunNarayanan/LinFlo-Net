@@ -6,7 +6,7 @@
 #SBATCH --account=fc_biome
 #
 # Partition:
-#SBATCH --partition=savio2_gpu
+#SBATCH --partition=savio2_1080ti
 #
 # QoS:
 #SBATCH --qos=savio_normal
@@ -24,10 +24,10 @@
 #SBATCH --gres=gpu:1
 #
 # Wall clock limit:
-#SBATCH --time=25:00:00
+#SBATCH --time=00:10:00
 #
 ## Command(s) to run (example):
 
 
-config_file=output/HeartData/linear_transform/linear_transform.yml
-python train_weighted_linear_transformation.py -config $config_file
+config_file=config/train_model.yml
+python train_model.py -config $config_file

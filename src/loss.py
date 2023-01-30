@@ -19,9 +19,9 @@ class DiceLoss(_Loss):
         num_classes = prediction.shape[1]
 
         prediction = prediction.softmax(dim=1)
-        prediction = prediction.view(batch_size, num_classes, -1)
+        prediction = prediction.reshape(batch_size, num_classes, -1)
 
-        ground_truth = ground_truth.view(batch_size, -1)
+        ground_truth = ground_truth.reshape(batch_size, -1)
         ground_truth = func.one_hot(ground_truth, num_classes)
         ground_truth = ground_truth.permute(0, 2, 1)
 

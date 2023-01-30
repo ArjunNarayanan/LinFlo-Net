@@ -122,13 +122,14 @@ def run_training_loop(net, optimizer, scheduler, dataloader, validation_dataset,
     validation_loss = []
 
     for epoch in range(num_epochs):
+        print("\n\nSTARTING EPOCH {:03d}\n\n".format(epoch))
         avg_train_loss, avg_validation_loss = step_training_epoch(epoch, net, optimizer, scheduler, dataloader,
         validation_dataset, loss_weights, save_best_model)
 
         train_loss.append(avg_train_loss)
         validation_loss.append(avg_validation_loss)
 
-        out_str = "\n\nEpoch {:04d} | Train Loss {:1.3e} | Validation Loss {:1.3e}\n\n".format(
+        out_str = "\n\nEpoch {:03d} | Train Loss {:1.3e} | Validation Loss {:1.3e}\n\n".format(
             epoch,
             avg_train_loss,
             avg_validation_loss
