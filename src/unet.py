@@ -2,11 +2,12 @@ from src.unet_components import *
 
 
 class Unet(nn.Module):
-    def __init__(self, input_channels, first_layer_channels, downarm_channels, uparm_channels):
+    def __init__(self, input_size, input_channels, first_layer_channels, downarm_channels, uparm_channels):
         super().__init__()
         assert len(downarm_channels) == len(uparm_channels)
         assert len(downarm_channels) > 1
 
+        self.input_size = torch.Size(input_size)
         self.input_channels = input_channels
         self.first_layer_channels = first_layer_channels
         self.downarm_channels = downarm_channels
@@ -34,6 +35,8 @@ class Unet(nn.Module):
         self.uparm.append(UpArm(inc, outc))
 
     def forward_downarm(self, x):
+        assert x.shape[-3:] == self.input_size
+
         x = self.input_layer(x)
         downarm_encodings = [x]
         for layer in self.downarm:

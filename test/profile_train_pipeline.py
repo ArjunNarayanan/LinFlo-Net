@@ -4,7 +4,7 @@ import os
 sys.path.append(os.getcwd())
 from src.dataset import ImageSegmentationDataset
 from src.unet_segment import UnetSegment
-from src.loss import DiceLoss
+from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
 import time
 import yaml
@@ -35,7 +35,7 @@ net_config = config["model"]
 net = UnetSegment.from_dict(net_config)
 net.to(device)
 
-dice_loss_evaluator = DiceLoss()
+dice_loss_evaluator = SoftDiceLoss()
 cross_entropy_loss_evaluator = CrossEntropyLoss()
 
 print("Num model parameters : ", count_parameters(net), "\n\n")

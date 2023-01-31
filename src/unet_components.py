@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as functional
 
 
 class ConvINormConv(nn.Module):
@@ -59,4 +58,31 @@ class UpArm(nn.Module):
         x1 = self.up_sample(x1)
         x = torch.cat([x1, x2], dim=1)
         x = self.conv(x)
+        return x
+
+
+class MultilayerCNN(nn.Module):
+    def __init__(self, input_shape, input_channels, first_layer_channels, downarm_channels):
+        super().__init__()
+
+        self.input_shape = torch.Size(input_shape)
+        self.input_channels = input_channels
+        self.first_layer_channels = first_layer_channels
+        self.downarm_channels = downarm_channels
+
+        self.input_layer = ConvINormConv(input_channels, first_layer_channels)
+
+        in_channels = first_layer_channels
+        self.downarm = nn.ModuleList()
+        for nc in downarm_channels:
+            self.downarm.append(DownArm(in_channels, nc))
+            in_channels = nc
+
+    def forward(self, x):
+        assert x.shape[-3:] == self.input_shape
+
+        x = self.input_layer(x)
+        for layer in self.downarm:
+            x = layer(x)
+
         return x

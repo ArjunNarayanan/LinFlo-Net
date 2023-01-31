@@ -1,10 +1,10 @@
 import torch
 import src.unet_segment as segment
 import numpy as np
-from src.loss import DiceLoss
+from src.loss import SoftDiceLoss
 
 cross_entropy_loss = torch.nn.CrossEntropyLoss(reduction="mean")
-dice_loss = DiceLoss()
+dice_loss = SoftDiceLoss()
 
 downarm_channels = [16,16,16,16]
 uparm_channels = [16,16,16,16]

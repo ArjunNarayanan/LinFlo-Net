@@ -1,7 +1,7 @@
 import os
 import torch.optim.lr_scheduler
 from src.unet_segment import UnetSegment
-from src.loss import DiceLoss
+from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
 from src.dataset import ImageSegmentationDataset
 from src.io_utils import SaveBestModel
@@ -20,7 +20,7 @@ def evaluate_model(net, dataset, loss_weights):
     avg_dice_loss = 0.0
     avg_cross_entropy_loss = 0.0
 
-    dice_loss_evaluator = DiceLoss()
+    dice_loss_evaluator = SoftDiceLoss()
     cross_entropy_loss_evaluator = CrossEntropyLoss()
 
     print("\n\nEVALUATING TEST LOSS\n\n")
@@ -68,7 +68,7 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
 
     eval_every = int(math.ceil(eval_frequency * len(dataloader)))
 
-    dice_loss_evaluator = DiceLoss()
+    dice_loss_evaluator = SoftDiceLoss()
     cross_entropy_loss_evaluator = CrossEntropyLoss(reduction="mean")
     dice_weight = loss_weights["dice"]
     cross_entropy_weight = loss_weights["cross_entropy"]
