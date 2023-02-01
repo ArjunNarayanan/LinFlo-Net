@@ -48,6 +48,7 @@ if __name__ == "__main__":
 
     model_fn = config["model"]
     model = torch.load(model_fn, map_location=device)["model"]
+    model.eval()
 
     scores = get_all_dice_scores(model, dataset)
     scores = np.array(scores)

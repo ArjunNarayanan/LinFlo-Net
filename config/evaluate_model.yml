@@ -1,4 +1,4 @@
-dataset: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/validation
+dataset: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
 model: output/train_model/best_model_dict.pth
 output_folder: output/train_model/evaluation/
 output_file: dice.csv

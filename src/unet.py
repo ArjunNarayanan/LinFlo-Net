@@ -35,7 +35,7 @@ class Unet(nn.Module):
         self.uparm.append(UpArm(inc, outc))
 
     def forward_downarm(self, x):
-        assert x.shape[-3:] == self.input_size
+        # assert x.shape[-3:] == self.input_size
 
         x = self.input_layer(x)
         downarm_encodings = [x]
