@@ -4,7 +4,7 @@ from src.segment_flow import SegmentFlow
 from src.integrator import IntegrateRK4
 from src.loss import SoftDiceLoss, average_chamfer_distance_between_meshes
 from torch.nn import CrossEntropyLoss
-from src.dataset import ImageSegmentationDataset
+from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_dataloader
 from src.io_utils import SaveBestModel
 from src.template import Template, BatchTemplate
 import math
@@ -30,7 +30,7 @@ def evaluate_model(net, integrator, dataset, batched_template, loss_config):
     net.eval()
     for (idx, data) in enumerate(dataset):
         image = data["image"].unsqueeze(0).to(device).to(memory_format=torch.channels_last_3d)
-        gt_segmentation = data["segmentation"].to(device)
+        gt_segmentation = data["segmentation"].unsqueeze(0).to(device)
         gt_meshes = [m.to(device) for m in data["meshes"]]
 
         with torch.no_grad():
@@ -99,7 +99,7 @@ def step_training_epoch(
 
         image = data["image"].to(device).to(memory_format=torch.channels_last_3d)
         gt_meshes = [m.to(device) for m in data["meshes"]]
-        gt_segmentation = data["segmentation"].squeeze(1).to(device)
+        gt_segmentation = data["segmentation"].to(device)
 
         batch_size = image.shape[0]
         batched_template = BatchTemplate.from_single_template(template, batch_size)
@@ -201,11 +201,10 @@ if __name__ == "__main__":
     train_folder = config["data"]["train_folder"]
     batch_size = config["train"]["batch_size"]
 
-    train_dataset = ImageSegmentationDataset(train_folder)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_dataloader = image_segmentation_mesh_dataloader(train_folder, batch_size=batch_size, shuffle=True)
 
     validation_folder = config["data"]["validation_folder"]
-    validation_dataset = ImageSegmentationDataset(validation_folder)
+    validation_dataset = ImageSegmentationMeshDataset(validation_folder)
 
     tmplt_fn = config["data"]["template_filename"]
     template = Template.from_vtk(tmplt_fn, device=device)
@@ -213,7 +212,7 @@ if __name__ == "__main__":
     net_config = config["model"]
     net = SegmentFlow.from_dict(net_config)
     net.to(device)
-    integrator = IntegrateRK4()
+    integrator = IntegrateRK4(config["integrator"]["num_steps"])
 
     optimizer_config = config["train"]["optimizer"]
     lr = optimizer_config["lr"]

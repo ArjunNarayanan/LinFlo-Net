@@ -33,11 +33,14 @@ class ImageSegmentationDataset(Dataset):
 
 
 def collate_fn(data):
-    assert "image" in data and "segmentation" in data and "meshes" in data
+    assert all("image" in d for d in data)
+    assert all("segmentation" in d for d in data)
+    assert all("meshes" in d for d in data)
+    
     assert len(data) > 0
     # Check that all images and segmentations have the same number of dimensions
     assert all((d["image"].ndim == 4 for d in data))
-    assert all((d["segmentation"].ndim == 4 for d in data))
+    assert all((d["segmentation"].ndim == 3 for d in data))
 
     meshes = [d["meshes"] for d in data]
     num_meshes = [len(m) for m in meshes]
@@ -79,6 +82,6 @@ class ImageSegmentationMeshDataset(Dataset):
 
 
 def image_segmentation_mesh_dataloader(root_dir, batch_size=1, shuffle=True):
-    dataset = ImageSegmentationDataset(root_dir)
+    dataset = ImageSegmentationMeshDataset(root_dir)
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_fn)
     return dataloader
