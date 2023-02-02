@@ -1,6 +1,6 @@
-dataset: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
+dataset: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/train_no_augmentation
 model: output/train_model/best_model_dict.pth
 output_folder: output/train_model/evaluation/
-output_file: dice.csv
+output_file: train_dice.csv
 header: ["Background", "Left Ventricle", "Left Atrium", "LV Blood Pool", "Right Atrium", "Right Ventricle",
                     "Aorta", "Pulmonary Artery"]

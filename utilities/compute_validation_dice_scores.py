@@ -18,10 +18,10 @@ def get_config(config_fn):
     return config
 
 
-def get_all_dice_scores(model, dataset):
+def get_all_dice_scores(model, dataset, indices):
     scores = []
 
-    for idx in range(len(dataset)):
+    for idx in indices:
         data = dataset[idx]
         fn = dataset.get_file_name(idx)
         print("PROCESSING FILE : " + fn)
@@ -50,10 +50,11 @@ if __name__ == "__main__":
     model = torch.load(model_fn, map_location=device)["model"]
     model.eval()
 
-    scores = get_all_dice_scores(model, dataset)
+    file_indices = range(len(dataset))
+    scores = get_all_dice_scores(model, dataset, file_indices)
     scores = np.array(scores)
 
-    dataset_filenames = [dataset.get_file_name(idx) for idx in range(len(dataset))]
+    dataset_filenames = [dataset.get_file_name(idx) for idx in file_indices]
     header = config["header"]
     assert len(header) == scores.shape[1]
 

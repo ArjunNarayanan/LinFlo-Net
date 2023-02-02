@@ -11,7 +11,6 @@ import argparse
 import numpy as np
 from torch.utils.data import DataLoader
 
-
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
@@ -32,16 +31,16 @@ def evaluate_model(net, dataset, loss_weights):
 
         with torch.no_grad():
             prediction = net(image)
-        
+
         dice = dice_loss_evaluator(prediction, segmentation)
         cross_entropy = cross_entropy_loss_evaluator(prediction, segmentation)
 
         avg_dice_loss += dice.item()
         avg_cross_entropy_loss += cross_entropy.item()
-    
+
     avg_dice_loss /= len(dataset)
     avg_cross_entropy_loss /= len(dataset)
-    total = loss_weights["dice"]*avg_dice_loss + loss_weights["cross_entropy"]*avg_cross_entropy_loss
+    total = loss_weights["dice"] * avg_dice_loss + loss_weights["cross_entropy"] * avg_cross_entropy_loss
 
     out_str = "\tDice {:1.3e} | Cross-Entropy {:1.3e} | Total {:1.3e}".format(
         avg_dice_loss,
@@ -56,9 +55,8 @@ def evaluate_model(net, dataset, loss_weights):
     return total
 
 
-def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation_dataset, 
+def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation_dataset,
                         loss_weights, save_best_model, eval_frequency=0.01):
-    
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
     assert eval_frequency > 0 and eval_frequency < 1
@@ -85,7 +83,7 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
         dice = dice_loss_evaluator(prediction, gt_segmentation)
         cross_entropy = cross_entropy_loss_evaluator(prediction, gt_segmentation)
 
-        loss = dice_weight*dice + cross_entropy_weight*cross_entropy
+        loss = dice_weight * dice + cross_entropy_weight * cross_entropy
         loss.backward()
         optimizer.step()
 
@@ -101,14 +99,13 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
         )
         print(out_str)
 
-        if (idx+1) % eval_every == 0:
+        if (idx + 1) % eval_every == 0:
             eval_counter += 1
             validation_loss = evaluate_model(net, validation_dataset, loss_weights)
             save_best_model(validation_loss, epoch, net, optimizer, "total_loss")
             avg_validation_loss += validation_loss
             scheduler.step(validation_loss)
 
-    
     avg_train_loss /= len(dataloader)
     if eval_counter > 0:
         avg_validation_loss /= eval_counter
@@ -116,15 +113,15 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
     return avg_train_loss, avg_validation_loss
 
 
-
-def run_training_loop(net, optimizer, scheduler, dataloader, validation_dataset, loss_weights, num_epochs, save_best_model):
+def run_training_loop(net, optimizer, scheduler, dataloader, validation_dataset, loss_weights, num_epochs,
+                      save_best_model):
     train_loss = []
     validation_loss = []
 
     for epoch in range(num_epochs):
         print("\n\nSTARTING EPOCH {:03d}\n\n".format(epoch))
         avg_train_loss, avg_validation_loss = step_training_epoch(epoch, net, optimizer, scheduler, dataloader,
-        validation_dataset, loss_weights, save_best_model)
+                                                                  validation_dataset, loss_weights, save_best_model)
 
         train_loss.append(avg_train_loss)
         validation_loss.append(avg_validation_loss)
@@ -135,7 +132,7 @@ def run_training_loop(net, optimizer, scheduler, dataloader, validation_dataset,
             avg_validation_loss
         )
         print(out_str)
-    
+
     return train_loss, validation_loss
 
 
@@ -158,7 +155,7 @@ if __name__ == "__main__":
 
     train_dataset = ImageSegmentationDataset(train_folder)
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-        
+
     validation_folder = config["data"]["validation_folder"]
     validation_dataset = ImageSegmentationDataset(validation_folder)
 
@@ -175,7 +172,7 @@ if __name__ == "__main__":
     default_output_dir = os.path.dirname(config_fn)
     output_dir = config["data"].get("output_dir", default_output_dir)
     print("WRITING OUTPUT TO : ", output_dir, "\n\n")
-    
+
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
@@ -185,6 +182,6 @@ if __name__ == "__main__":
     num_epochs = config["train"]["num_epochs"]
     loss_weights = config["loss"]
 
-    
-    train_loss, test_loss = run_training_loop(net, optimizer, scheduler, train_dataloader, validation_dataset, loss_weights,
-                                                num_epochs, save_best_model)
+    train_loss, test_loss = run_training_loop(net, optimizer, scheduler, train_dataloader, validation_dataset,
+                                              loss_weights,
+                                              num_epochs, save_best_model)

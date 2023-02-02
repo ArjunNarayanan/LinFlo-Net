@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as func
 from torch.nn.modules.loss import _Loss
 import numpy as np
+from pytorch3d.loss import chamfer_distance
 
 
 class SoftDiceLoss(_Loss):
@@ -54,3 +55,32 @@ def all_classes_dice_score(predicted_logits, gt_classes):
         gt_mask = gt_classes == label
         scores.append(dice_score(pred_mask, gt_mask))
     return scores
+
+
+def chamfer_loss_between_meshes(mesh1, mesh2, norm):
+    assert norm == 1 or norm == 2
+
+    x = mesh1.verts_padded()
+    x_normals = mesh1.verts_normals_padded()
+    x_lengths = mesh1.num_verts_per_mesh()
+
+    y = mesh2.verts_padded()
+    y_normals = mesh2.verts_normals_padded()
+    y_lengths = mesh2.num_verts_per_mesh()
+
+    chd, chn = chamfer_distance(x, y, x_lengths=x_lengths, y_lengths=y_lengths,
+                                x_normals=x_normals, y_normals=y_normals, norm=norm)
+    return chd, chn
+
+
+def average_chamfer_distance_between_meshes(mesh_list1, mesh_list2, norm):
+    num_meshes = len(mesh_list2)
+    assert len(mesh_list1) == num_meshes
+
+    loss_list = [chamfer_loss_between_meshes(mesh_list1[idx], mesh_list2[idx], norm) for idx in range(num_meshes)]
+    chd = [l[0] for l in loss_list]
+    chn = [l[1] for l in loss_list]
+
+    avg_chd = sum(chd) / num_meshes
+    avg_chn = sum(chn) / num_meshes
+    return avg_chd, avg_chn

@@ -6,6 +6,7 @@ class Unet(nn.Module):
         super().__init__()
         assert len(downarm_channels) == len(uparm_channels)
         assert len(downarm_channels) > 1
+        assert len(self.input_size) == 3
 
         self.input_size = torch.Size(input_size)
         self.input_channels = input_channels
