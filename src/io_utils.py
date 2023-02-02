@@ -3,6 +3,7 @@ import sys
 import torch
 import numpy as np
 import vtk
+from pytorch3d.structures import Meshes
 
 sys.path.append(os.getcwd())
 import vtk_utils.vtk_utils as vtu
@@ -67,6 +68,18 @@ def mesh2faces(mesh):
     faces = faces.reshape([-1, 4])
     faces = faces[:, 1:]
     return torch.tensor(faces)
+
+
+def pytorch3d_meshes_from_vtk(mesh_fn, device=None):
+    mesh_list = read_mesh_list(mesh_fn)
+    verts = [mesh2verts(m).unsqueeze(0) for m in mesh_list]
+    faces = [mesh2faces(m).unsqueeze(0) for m in mesh_list]
+
+    meshes = [Meshes(verts=v, faces=f) for (v, f) in zip(verts, faces)]
+    if device is not None:
+        meshes = [m.to(device) for m in meshes]
+
+    return meshes
 
 
 def read_face_ids(mesh_fn, id_name):
