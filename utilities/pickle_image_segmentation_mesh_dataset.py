@@ -17,6 +17,7 @@ def get_image(img_fn):
     img = img.unsqueeze(0)
     return img
 
+
 def read_segmentation(seg_fn):
     img = io.read_image(seg_fn)
     assert img.ndim == 3
@@ -32,7 +33,7 @@ def relabel_segmentation(seg, classes):
 
 def get_segmentation(seg_fn, seg_labels):
     num_classes = len(seg_labels)
-    
+
     seg = read_segmentation(seg_fn)
     seg_classes = np.unique(seg)
     assert len(seg_labels) == len(seg_classes)
@@ -54,7 +55,6 @@ def pickle_image_segmentation_mesh(im_fn, seg_fn, mesh_fn, seg_labels, out_fn):
 
     data = {"image": img, "segmentation": seg, "meshes": meshes}
     pickle.dump(data, open(out_fn, "wb"))
-
 
 
 def pickle_all_data(root_dir, filename_index, outdir, seg_labels):
@@ -92,7 +92,6 @@ if __name__ == "__main__":
     config_fn = args.config
     with open(config_fn, "r") as config_file:
         config = yaml.safe_load(config_file)
-
 
     infolder = config["input_folder"]
     outfolder = config["output_folder"]
