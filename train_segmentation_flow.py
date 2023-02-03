@@ -11,7 +11,6 @@ import math
 import yaml
 import argparse
 import numpy as np
-from torch.utils.data import DataLoader
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
@@ -134,7 +133,9 @@ def step_training_epoch(
             batched_template = BatchTemplate.from_single_template(template, 1)
             validation_loss = evaluate_model(net, integrator, validation_dataset, batched_template, loss_config)
             avg_validation_loss += validation_loss
-            save_best_model(validation_loss, epoch, net, integrator, optimizer)
+
+            save_data = {"model": net, "optimizer": optimizer, "integrator": integrator}
+            save_best_model(validation_loss, epoch, save_data)
             scheduler.step(validation_loss)
 
     avg_train_loss /= len(dataloader)
@@ -144,18 +145,8 @@ def step_training_epoch(
     return avg_train_loss, avg_validation_loss
 
 
-def run_training_loop(
-        net,
-        integrator,
-        optimizer,
-        scheduler,
-        dataloader,
-        validation_dataset,
-        template,
-        loss_config,
-        save_best_model,
-        num_epochs,
-):
+def run_training_loop(net, integrator, optimizer, scheduler, dataloader, validation_dataset, template, loss_config,
+                      save_best_model, num_epochs):
     train_loss = []
     validation_loss = []
 
@@ -182,6 +173,8 @@ def run_training_loop(
             avg_validation_loss
         )
         print(out_str)
+
+    return train_loss, validation_loss
 
 
 def get_config(config_fn):
@@ -233,18 +226,8 @@ if __name__ == "__main__":
     num_epochs = config["train"]["num_epochs"]
     loss_config = config["loss"]
 
-    train_loss, test_loss = run_training_loop(
-        net,
-        integrator,
-        optimizer,
-        scheduler,
-        train_dataloader,
-        validation_dataset,
-        template,
-        loss_config,
-        save_best_model,
-        num_epochs
-    )
+    train_loss, test_loss = run_training_loop(net, integrator, optimizer, scheduler, train_dataloader,
+                                              validation_dataset, template, loss_config, save_best_model, num_epochs)
 
     output_data = np.array([train_loss, test_loss]).T
     df_outfile = os.path.join(output_dir, "loss_history.csv")

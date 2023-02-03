@@ -22,17 +22,13 @@ class SaveBestModel:
         self.best_valid_loss = best_valid_loss
         self.output_fn = output_fn
 
-    def __call__(self, current_valid_loss, epoch, model, integrator, optimizer):
+    def __call__(self, current_valid_loss, epoch, data):
         if current_valid_loss < self.best_valid_loss:
             self.best_valid_loss = current_valid_loss
             print(f"\nBest validation loss: {self.best_valid_loss}")
             print(f"\nSaving best model for epoch: {epoch + 1}\n")
-            torch.save({
-                'epoch': epoch + 1,
-                "model": model,
-                "integrator": integrator,
-                "optimizer": optimizer,
-            }, self.output_fn)
+            data["epoch"] = epoch + 1
+            torch.save(data, self.output_fn)
 
 
 def read_image(img_fn):
