@@ -23,8 +23,9 @@ model:
     num_classes: 8
     clip_flow: 0.01
 integrator:
-    num_steps: 50
+    num_steps: 100
 loss:
+    norm_type: 1
     cross_entropy: 1.0
     dice: 1.0
     chamfer_distance: 1.0

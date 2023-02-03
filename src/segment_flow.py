@@ -29,6 +29,8 @@ class SegmentFlow(nn.Module):
         uparm_channels = definition["uparm_channels"]
         num_classes = definition["num_classes"]
         clip_flow = definition["clip_flow"]
+        return cls(input_size, input_channels, unet_first_channels, 
+            downarm_channels, uparm_channels, num_classes, clip_flow)
 
     def _clip_flow_field(self, flow):
         clip_flow = self.clip_flow
@@ -41,5 +43,5 @@ class SegmentFlow(nn.Module):
         encoding = self.encoder(image)
         segmentation = self.segmentation(encoding)
         flow = self.flow(encoding)
-        flow = self.clip_flow(flow)
+        flow = self._clip_flow_field(flow)
         return segmentation, flow
