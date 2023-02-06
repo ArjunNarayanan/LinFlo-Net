@@ -3,7 +3,7 @@ import torch.optim.lr_scheduler
 from src.unet_segment import UnetSegment
 from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
-from src.dataset import ImageSegmentationDataset
+from src.dataset import ImageSegmentationMeshDataset, collate_fn
 from src.io_utils import SaveBestModel
 import math
 import yaml
@@ -27,7 +27,7 @@ def evaluate_model(net, dataset, loss_weights):
     net.eval()
     for (idx, data) in enumerate(dataset):
         image = data["image"].unsqueeze(0).to(device).to(memory_format=torch.channels_last_3d)
-        segmentation = data["segmentation"].to(device)
+        segmentation = data["segmentation"].unsqueeze(0).to(device)
 
         with torch.no_grad():
             prediction = net(image)
@@ -76,7 +76,7 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
         optimizer.zero_grad(set_to_none=True)
 
         image = data["image"].to(device).to(memory_format=torch.channels_last_3d)
-        gt_segmentation = data["segmentation"].squeeze(1).to(device)
+        gt_segmentation = data["segmentation"].to(device)
 
         prediction = net(image)
 
@@ -102,7 +102,8 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
         if (idx + 1) % eval_every == 0:
             eval_counter += 1
             validation_loss = evaluate_model(net, validation_dataset, loss_weights)
-            save_best_model(validation_loss, epoch, net, optimizer, "total_loss")
+            save_data = {"model": net, "optimizer": optimizer}
+            save_best_model(validation_loss, epoch, save_data)
             avg_validation_loss += validation_loss
             scheduler.step(validation_loss)
 
@@ -153,11 +154,11 @@ if __name__ == "__main__":
     train_folder = config["data"]["train_folder"]
     batch_size = config["train"]["batch_size"]
 
-    train_dataset = ImageSegmentationDataset(train_folder)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_dataset = ImageSegmentationMeshDataset(train_folder)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
 
     validation_folder = config["data"]["validation_folder"]
-    validation_dataset = ImageSegmentationDataset(validation_folder)
+    validation_dataset = ImageSegmentationMeshDataset(validation_folder)
 
     net_config = config["model"]
     net = UnetSegment.from_dict(net_config)

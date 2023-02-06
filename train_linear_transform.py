@@ -31,7 +31,7 @@ def evaluate_test_loss(net, dataset, batched_template, norm_type):
         batched_template.update_batched_vertices(deformed_coords, detach=False)
         gt_meshes = [m.to(device) for m in data["meshes"]]
 
-        chmf_loss = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
+        chmf_loss, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
 
         avg_loss += chmf_loss
 
@@ -81,7 +81,7 @@ def step_training_epoch(epoch,
         batched_template.update_batched_vertices(deformed_verts, detach=False)
         gt_meshes = [m.to(device) for m in data["meshes"]]
 
-        chamfer_loss = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
+        chamfer_loss, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
         total_loss = chamfer_loss
 
         total_loss.backward()
@@ -95,7 +95,8 @@ def step_training_epoch(epoch,
             "\t\tMinibatch {:04d} | CHD {:1.3e} | LR {:1.3e}".format(idx, loss_val, lr))
 
         if (idx + 1) % eval_every == 0:
-            test_chamfer_loss = evaluate_test_loss(net, validation_dataset, template, norm_type)
+            batched_template = BatchTemplate.from_single_template(template, 1)
+            test_chamfer_loss = evaluate_test_loss(net, validation_dataset, batched_template, norm_type)
             test_loss = test_chamfer_loss.item()
             avg_test_loss += test_loss
             test_counter += 1

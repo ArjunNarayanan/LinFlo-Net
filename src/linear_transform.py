@@ -27,10 +27,10 @@ class LinearTransform(nn.Module):
         self.encoder = MultilayerCNN(input_shape, input_channels, first_layer_channels, downarm_channels)
         num_conv = len(downarm_channels)
         self.encoder_output_channels = downarm_channels[-1]
-        self.encoder_output_size = input_shape // (2 ** num_conv)
+        self.encoder_output_size = input_shape[0] // (2 ** num_conv)
         assert self.encoder_output_size > 2
 
-        self.num_encoder_features = (self.conv_output_size ** 3) * self.encoder_output_channels
+        self.num_encoder_features = (self.encoder_output_size ** 3) * self.encoder_output_channels
         self.linear_transform_parameters = nn.Linear(self.num_encoder_features, 9)
 
         # Initialize weights to small values
@@ -43,8 +43,8 @@ class LinearTransform(nn.Module):
 
     @classmethod
     def from_dict(cls, definition):
-        input_shape = definition.get("input_shape")
-        input_channels = definition.get("input_channels", 1)
+        input_shape = definition["input_size"]
+        input_channels = definition["input_channels"]
         first_layer_channels = definition["first_layer_channels"]
         downarm_channels = definition["downarm_channels"]
 
@@ -55,9 +55,9 @@ class LinearTransform(nn.Module):
         x = x.reshape([x.shape[0], -1])
         transform_parameters = self.linear_transform_parameters(x)
 
-        scale_by = self.scale_weight * (1 - transform_parameters[:, 0:3])
-        translate_by = self.translate_weight * transform_parameters[:, 3:6]
-        rotate_by = self.rotate_weight * transform_parameters[:, 6:9]
+        scale_by = (1 - transform_parameters[:, 0:3])
+        translate_by = transform_parameters[:, 3:6]
+        rotate_by = self.scale_rotation * transform_parameters[:, 6:9]
 
         return ApplyLinearTransform(scale_by, translate_by, rotate_by)
 
