@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from src.unet_components import MultilayerCNN
+from src.unet_components import MultilayerCNN, SimpleCNN
 from pytorch3d.transforms import Scale, Translate, Rotate, euler_angles_to_matrix
 
 
@@ -21,10 +21,19 @@ class ApplyLinearTransform():
 
 
 class LinearTransform(nn.Module):
-    def __init__(self, input_shape, input_channels, first_layer_channels, downarm_channels):
+    def __init__(self, encoder_name, definition):
         super().__init__()
+        self.encoder_name = encoder_name
 
-        self.encoder = MultilayerCNN(input_shape, input_channels, first_layer_channels, downarm_channels)
+        if encoder_name == "MultilayerCNN":
+            self.encoder = MultilayerCNN(**definition)
+        elif encoder_name == "SimpleCNN":
+            self.encoder = SimpleCNN(**definition)
+        else:
+            raise ValueError("Unexpected value for encoder_name : ", encoder_name)
+
+        downarm_channels = definition["downarm_channels"]
+        input_shape = definition["input_shape"]
         num_conv = len(downarm_channels)
         self.encoder_output_channels = downarm_channels[-1]
         self.encoder_output_size = input_shape[0] // (2 ** num_conv)
@@ -42,13 +51,8 @@ class LinearTransform(nn.Module):
         self.scale_rotation = torch.pi
 
     @classmethod
-    def from_dict(cls, definition):
-        input_shape = definition["input_size"]
-        input_channels = definition["input_channels"]
-        first_layer_channels = definition["first_layer_channels"]
-        downarm_channels = definition["downarm_channels"]
-
-        return cls(input_shape, input_channels, first_layer_channels, downarm_channels)
+    def from_dict(cls, encoder_name, definition):
+        return cls(definition)
 
     def get_linear_transformer(self, image):
         x = self.encoder(image)

@@ -86,3 +86,41 @@ class MultilayerCNN(nn.Module):
             x = layer(x)
 
         return x
+
+
+class ConvMaxpool(nn.Module):
+    def __init__(self, in_channels, out_channels):
+        super().__init__()
+
+        self.conv = nn.Conv3d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.activation = nn.LeakyReLU()
+        self.pool = nn.MaxPool3d((2, 2, 2))
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.activation(x)
+        x = self.pool(x)
+        return x
+
+
+class SimpleCNN(nn.Module):
+    def __init__(self, input_shape, input_channels, downarm_channels):
+        super().__init__()
+
+        self.input_shape = torch.Size(input_shape)
+        self.input_channels = input_channels
+        self.downarm_channels = downarm_channels
+
+        in_channels = input_channels
+        convs = []
+        for nc in downarm_channels:
+            convs.append(ConvMaxpool(in_channels, nc))
+            in_channels = nc
+
+        self.downarm = nn.Sequential(*convs)
+
+    def forward(self, x):
+        assert x.shape[-3:] == self.input_shape
+
+        x = self.downarm(x)
+        return x
