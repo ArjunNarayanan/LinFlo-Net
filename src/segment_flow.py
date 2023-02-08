@@ -1,4 +1,5 @@
 from src.unet import *
+import src.finite_difference as fd
 
 
 class SegmentFlow(nn.Module):
@@ -13,6 +14,7 @@ class SegmentFlow(nn.Module):
         assert clip_flow > 0
         super().__init__()
 
+        input_size = 3 * [input_size]
         self.encoder = Unet(input_size, input_channels, unet_first_layer_channels, downarm_channels, uparm_channels)
         decoder_input_channels = uparm_channels[-1]
         self.segmentation = nn.Conv3d(decoder_input_channels, num_classes, kernel_size=3, padding=1)
@@ -51,6 +53,20 @@ class SegmentFlow(nn.Module):
         flow = self.flow(encoding)
         flow = self._clip_flow_field(flow)
         return segmentation, flow
+
+
+class SegmentFlowDiv(SegmentFlow):
+    def __init__(self, *args):
+        super().__init__(*args)
+        input_size = args[0]
+        assert input_size > 1
+        self.spacing = 1.0 / (input_size - 1)
+
+    def get_segmentation_and_flow_div(self, image):
+        segmentation, flow_field = self.get_segmentation_and_flow(image)
+        flow_div = fd.batch_divergence3d(flow_field, self.spacing)
+        flow_and_div = torch.cat([flow_field, flow_div], dim=1)
+        return segmentation, flow_and_div
 
 
 class FlowPredictor(nn.Module):

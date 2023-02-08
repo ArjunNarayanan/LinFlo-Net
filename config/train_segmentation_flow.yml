@@ -15,7 +15,7 @@ train:
         threshold: 1.e-4
         min_lr: 1.e-6
 model:
-    input_size: [128,128,128]
+    input_size: 128
     input_channels: 1
     unet_first_channels: 16
     downarm_channels: [64, 128, 256, 256]
