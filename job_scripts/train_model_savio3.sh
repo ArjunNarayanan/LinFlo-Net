@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=Train-Segmentation
+#SBATCH --job-name=Train-LT-SCNN-5
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -21,10 +21,10 @@
 #SBATCH --gres=gpu:GTX2080TI:1
 #
 # Wall clock limit:
-#SBATCH --time=70:00:00
+#SBATCH --time=40:00:00
 #
 ## Command(s) to run (example):
 
 
-config_file=output/segmentation/segmentation_config.yml
-python train_segmentation.py -config $config_file
+config_file=output/linear_transform_scnn_5/linear_transform_config.yml
+python train_linear_transform.py -config $config_file

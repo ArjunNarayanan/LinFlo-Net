@@ -53,8 +53,10 @@ class LinearTransform(nn.Module):
         self.scale_rotation = torch.pi
 
     @classmethod
-    def from_dict(cls, encoder_name, definition):
-        return cls(definition)
+    def from_dict(cls, definition):
+        encoder_name = definition["encoder_name"]
+        encoder_definition = definition["encoder_definition"]
+        return cls(encoder_name, encoder_definition)
 
     def get_linear_transformer(self, image):
         x = self.encoder(image)
