@@ -1,4 +1,4 @@
-from src.linear_transform import LinearTransform
+from src.linear_transform import LinearTransformWithEncoder
 from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_dataloader
 from src.template import Template, BatchTemplate
 from src.loss import average_chamfer_distance_between_meshes
@@ -178,7 +178,7 @@ if __name__ == "__main__":
     template = Template.from_vtk(tmplt_fn, device=device)
 
     net_config = config["model"]
-    net = LinearTransform.from_dict(net_config)
+    net = LinearTransformWithEncoder.from_dict(net_config)
     net.to(device)
 
     optimizer_config = config["train"]["optimizer"]

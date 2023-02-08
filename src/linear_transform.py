@@ -58,9 +58,12 @@ class LinearTransform(nn.Module):
         encoder_definition = definition["encoder_definition"]
         return cls(encoder_name, encoder_definition)
 
-    def get_linear_transformer(self, image):
-        x = self.encoder(image)
-        x = x.reshape([x.shape[0], -1])
+    def encode(self, image):
+        encoding = self.encoder(image)
+        return encoding
+
+    def get_linear_transformer(self, encoding):
+        x = encoding.reshape([encoding.shape[0], -1])
         transform_parameters = self.linear_transform_parameters(x)
 
         scale_by = (1 - transform_parameters[:, 0:3])
@@ -82,7 +85,8 @@ class LinearTransform(nn.Module):
         assert all([v.shape[0] == batch_size for v in verts_list])
         assert all([v.shape[-1] == 3 for v in verts_list])
 
-        transformer = self.get_linear_transformer(image)
+        encoding = self.encode(image)
+        transformer = self.get_linear_transformer(encoding)
         deformed_verts_list = [transformer.transform(verts) for verts in verts_list]
 
         return deformed_verts_list
@@ -103,3 +107,25 @@ class LinearTransform(nn.Module):
 
     def deform_vertices(self, image, vertices):
         return self.forward(image, vertices)
+
+
+class LinearTransformWithEncoder(LinearTransform):
+    def __init__(self, pretrained_encoder, encoder_name, definition):
+        super().__init__(encoder_name, definition)
+
+        self.pretrained_encoder = pretrained_encoder
+        for param in self.pretrained_encoder.parameters():
+            param.requires_grad = False
+
+    @classmethod
+    def from_dict(cls, definition):
+        pretrained_encoder_fn = definition["pretrained_encoder"]
+        pretrained_encoder = torch.load(pretrained_encoder_fn, map_location=torch.device("cpu"))
+        encoder_name = definition["encoder_name"]
+        encoder_definition = definition["encoder_definition"]
+        return cls(pretrained_encoder, encoder_name, encoder_definition)
+
+    def encode(self, image):
+        encoding = self.pretrained_encoder(image)
+        encoding = self.encoder(encoding)
+        return encoding
