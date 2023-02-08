@@ -3,14 +3,18 @@ import torch.nn as nn
 
 
 class ConvINormConv(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
+    def __init__(self, in_channels, out_channels, hidden_channels = None, kernel_size=3, padding=1):
         super().__init__()
         self.in_channels = in_channels
+        if hidden_channels is None:
+            hidden_channels = out_channels
+        self.hidden_channels = hidden_channels
+        self.out_channels = out_channels
 
-        self.conv1 = nn.Conv3d(in_channels, out_channels, kernel_size=kernel_size, padding=padding, bias=False)
-        self.norm1 = nn.InstanceNorm3d(out_channels)
+        self.conv1 = nn.Conv3d(in_channels, hidden_channels, kernel_size=kernel_size, padding=padding, bias=False)
+        self.norm1 = nn.InstanceNorm3d(hidden_channels)
         self.activation = nn.LeakyReLU()
-        self.conv2 = nn.Conv3d(out_channels, out_channels, kernel_size=kernel_size, padding=padding, bias=False)
+        self.conv2 = nn.Conv3d(hidden_channels, out_channels, kernel_size=kernel_size, padding=padding, bias=False)
         self.norm2 = nn.InstanceNorm3d(out_channels)
 
     def forward(self, x):

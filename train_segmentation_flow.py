@@ -134,8 +134,8 @@ def step_training_epoch(
         avg_train_loss += loss.item()
         lr = optimizer.param_groups[0]["lr"]
 
-        out_str = "\tBatch {:04d} | Dice {:1.3e} | CE {:1.3e} | CHD {:1.3e} | CHN {:1.3e} | TOT {:1.3e} | LR {:1.3e}".format(
-            idx, dice.item(), cross_entropy.item(), chd.item(), chn.item(), loss.item(), lr
+        out_str = "\tBatch {:04d} | Dice {:1.3e} | CE {:1.3e} | CHD {:1.3e} | CHN {:1.3e} | MD {:1.3e} | TOT {:1.3e} | LR {:1.3e}".format(
+            idx, dice.item(), cross_entropy.item(), chd.item(), chn.item(), divergence_loss.item(), loss.item(), lr
         )
         print(out_str)
 
@@ -156,7 +156,7 @@ def step_training_epoch(
     return avg_train_loss, avg_validation_loss
 
 
-def run_training_loop(net, integrator, optimizer, scheduler, dataloader, validation_dataset, template, loss_config,
+def run_training_loop(net, optimizer, scheduler, dataloader, validation_dataset, template, loss_config,
                       save_best_model, num_epochs):
     train_loss = []
     validation_loss = []
@@ -166,7 +166,6 @@ def run_training_loop(net, integrator, optimizer, scheduler, dataloader, validat
         avg_train_loss, avg_validation_loss = step_training_epoch(
             epoch,
             net,
-            integrator,
             optimizer,
             scheduler,
             dataloader,

@@ -17,10 +17,19 @@ class SegmentFlow(nn.Module):
         input_size = 3 * [input_size]
         self.encoder = Unet(input_size, input_channels, unet_first_layer_channels, downarm_channels, uparm_channels)
         decoder_input_channels = uparm_channels[-1]
-        self.segmentation = nn.Conv3d(decoder_input_channels, num_classes, kernel_size=3, padding=1)
-        self.flow = nn.Conv3d(decoder_input_channels, 3, kernel_size=3, padding=1)
+
         self.num_classes = num_classes
+        self.segmentation = nn.Conv3d(decoder_input_channels, num_classes, kernel_size = 1)
+        
+        OUTPUT_HIDDEN_LAYERS = 32
+        self.flow_encoder = ConvINormConv(decoder_input_channels, OUTPUT_HIDDEN_LAYERS)
+        self.flow = nn.Conv3d(OUTPUT_HIDDEN_LAYERS, 3, kernel_size=1)
         self.clip_flow = clip_flow
+
+        # Initialize flow weights to small value
+        self.flow.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.flow.weight.shape))
+        self.flow.bias = nn.Parameter(torch.zeros(self.flow.bias.shape))
+
 
     @classmethod
     def from_dict(cls, definition):
@@ -43,6 +52,7 @@ class SegmentFlow(nn.Module):
 
     def get_flow_field(self, image):
         encoding = self.encoder(image)
+        encoding = self.flow_encoder(encoding)
         flow = self.flow(encoding)
         flow = self._clip_flow_field(flow)
         return flow
@@ -50,7 +60,9 @@ class SegmentFlow(nn.Module):
     def get_segmentation_and_flow(self, image):
         encoding = self.encoder(image)
         segmentation = self.segmentation(encoding)
-        flow = self.flow(encoding)
+
+        flow_encoding = self.flow_encoder(encoding)
+        flow = self.flow(flow_encoding)
         flow = self._clip_flow_field(flow)
         return segmentation, flow
 
