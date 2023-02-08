@@ -39,7 +39,22 @@ class IntegrateRK4:
 
         return x
 
-    def integrate(self, flow, x):
+    def _integrate_tensor(self, flow, x):
+        assert isinstance(x, torch.Tensor)
+
         for step in range(self.num_steps):
             x = self.step(flow, x)
         return x
+
+    def _integrate_tensor_list(self, flow, x_list):
+        assert isinstance(x_list, list)
+        y_list = [self._integrate_tensor(flow, x) for x in x_list]
+        return y_list
+
+    def integrate(self, flow, vertices):
+        if isinstance(vertices, torch.Tensor):
+            return self._integrate_tensor(flow, vertices)
+        elif isinstance(vertices, list):
+            return self._integrate_tensor_list(flow, vertices)
+        else:
+            raise TypeError("Expected vertices to be torch tensor or list but got", type(vertices))

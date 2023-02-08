@@ -40,7 +40,9 @@ class LinearTransform(nn.Module):
         assert self.encoder_output_size > 2
 
         self.num_encoder_features = (self.encoder_output_size ** 3) * self.encoder_output_channels
-        self.linear_transform_parameters = nn.Linear(self.num_encoder_features, 9)
+        self.linear_transform_parameters = nn.Sequential(nn.Linear(self.mlp_input_size, 128),
+                                                         nn.LeakyReLU(),
+                                                         nn.Linear(128, 9))
 
         # Initialize weights to small values
         final_layer = self.linear_transform_parameters
@@ -84,6 +86,8 @@ class LinearTransform(nn.Module):
         return deformed_verts_list
 
     def _linear_transform_vertices(self, image, vertices):
+        assert isinstance(vertices, torch.Tensor)
+
         verts = self._linear_transform_vertices_list(image, [vertices])
         return verts[0]
 
@@ -94,3 +98,6 @@ class LinearTransform(nn.Module):
             return self._linear_transform_vertices(image, vertices)
         else:
             raise TypeError("Expected vertices to be list of tensors or tensor, got ", type(vertices))
+
+    def deform_vertices(self, image, vertices):
+        return self.forward(image, vertices)

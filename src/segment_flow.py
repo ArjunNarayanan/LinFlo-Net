@@ -29,8 +29,8 @@ class SegmentFlow(nn.Module):
         uparm_channels = definition["uparm_channels"]
         num_classes = definition["num_classes"]
         clip_flow = definition["clip_flow"]
-        return cls(input_size, input_channels, unet_first_channels, 
-            downarm_channels, uparm_channels, num_classes, clip_flow)
+        return cls(input_size, input_channels, unet_first_channels,
+                   downarm_channels, uparm_channels, num_classes, clip_flow)
 
     def _clip_flow_field(self, flow):
         clip_flow = self.clip_flow
@@ -39,9 +39,28 @@ class SegmentFlow(nn.Module):
         flow = clip_flow * (flow / norm)
         return flow
 
-    def forward(self, image):
+    def get_flow_field(self, image):
+        encoding = self.encoder(image)
+        flow = self.flow(encoding)
+        flow = self._clip_flow_field(flow)
+        return flow
+
+    def get_segmentation_and_flow(self, image):
         encoding = self.encoder(image)
         segmentation = self.segmentation(encoding)
         flow = self.flow(encoding)
         flow = self._clip_flow_field(flow)
         return segmentation, flow
+
+
+class FlowPredictor(nn.Module):
+    def __init__(self, flow, integrator):
+        super().__init__()
+
+        self.flow = flow
+        self.integrator = integrator
+
+    def forward(self, image, vertices):
+        flow = self.flow.get_flow_field(image)
+        deformed_vertices = self.integrator.integrate(flow, vertices)
+        return deformed_vertices

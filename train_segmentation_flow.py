@@ -1,6 +1,6 @@
 import os
 import torch.optim.lr_scheduler
-from src.segment_flow import SegmentFlow
+from src.segment_flow import SegmentFlow, FlowPredictor
 from src.integrator import IntegrateRK4
 from src.loss import SoftDiceLoss, average_chamfer_distance_between_meshes
 from torch.nn import CrossEntropyLoss
@@ -15,7 +15,7 @@ import numpy as np
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
-def evaluate_model(net, integrator, dataset, batched_template, loss_config):
+def evaluate_model(net, dataset, batched_template, loss_config):
     assert len(dataset) > 0.0
     avg_loss = np.zeros(4)
 
@@ -33,9 +33,9 @@ def evaluate_model(net, integrator, dataset, batched_template, loss_config):
         gt_meshes = [m.to(device) for m in data["meshes"]]
 
         with torch.no_grad():
-            pred_segmentation, flow = net(image)
+            pred_segmentation, flow = net.flow.get_segmentation_and_flow(image)
 
-        deformed_verts = [integrator.integrate(flow, x) for x in batched_verts]
+        deformed_verts = net.integrator.integrate(flow, batched_verts)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
         chd, chn = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
@@ -65,7 +65,6 @@ def evaluate_model(net, integrator, dataset, batched_template, loss_config):
 def step_training_epoch(
         epoch,
         net,
-        integrator,
         optimizer,
         scheduler,
         dataloader,
@@ -104,9 +103,9 @@ def step_training_epoch(
         batched_template = BatchTemplate.from_single_template(template, batch_size)
         batched_verts = batched_template.batch_vertex_coordinates()
 
-        pred_segmentation, flow = net(image)
+        pred_segmentation, flow = net.flow.get_segmentation_and_flow(image)
 
-        deformed_verts = [integrator.integrate(flow, x) for x in batched_verts]
+        deformed_verts = net.integrator.integrate(flow, batched_verts)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
         chd, chn = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
@@ -131,10 +130,10 @@ def step_training_epoch(
         if (idx + 1) % eval_every == 0:
             eval_counter += 1
             batched_template = BatchTemplate.from_single_template(template, 1)
-            validation_loss = evaluate_model(net, integrator, validation_dataset, batched_template, loss_config)
+            validation_loss = evaluate_model(net, validation_dataset, batched_template, loss_config)
             avg_validation_loss += validation_loss
 
-            save_data = {"model": net, "optimizer": optimizer, "integrator": integrator}
+            save_data = {"model": net, "optimizer": optimizer}
             save_best_model(validation_loss, epoch, save_data)
             scheduler.step(validation_loss)
 
@@ -202,10 +201,11 @@ if __name__ == "__main__":
     tmplt_fn = config["data"]["template_filename"]
     template = Template.from_vtk(tmplt_fn, device=device)
 
-    net_config = config["model"]
-    net = SegmentFlow.from_dict(net_config)
-    net.to(device)
+    flow_config = config["model"]
+    flow_module = SegmentFlow.from_dict(flow_config)
     integrator = IntegrateRK4(config["integrator"]["num_steps"])
+    net = FlowPredictor(flow_module, integrator)
+    net.to(device)
 
     optimizer_config = config["train"]["optimizer"]
     lr = optimizer_config["lr"]
@@ -226,7 +226,7 @@ if __name__ == "__main__":
     num_epochs = config["train"]["num_epochs"]
     loss_config = config["loss"]
 
-    train_loss, test_loss = run_training_loop(net, integrator, optimizer, scheduler, train_dataloader,
+    train_loss, test_loss = run_training_loop(net, optimizer, scheduler, train_dataloader,
                                               validation_dataset, template, loss_config, save_best_model, num_epochs)
 
     output_data = np.array([train_loss, test_loss]).T
