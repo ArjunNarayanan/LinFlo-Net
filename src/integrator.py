@@ -60,15 +60,11 @@ class IntegrateRK4:
             raise TypeError("Expected vertices to be torch tensor or list but got " + type(vertices))
 
 
-class IntegrateFlowDivRK4:
+class IntegrateFlowDivRK4(IntegrateRK4):
     def __init__(self, num_steps, interpolation="bilinear"):
-        self.interpolator = GridSample(interpolation)
-        self.num_steps = num_steps
+        super().__init__(num_steps, interpolation)
 
-        self.weights = [1.0 / 6.0, 1.0 / 3.0, 1.0 / 3.0, 1.0 / 6.0]
-        self.coefs = [0.5, 0.5, 1.0, 0.0]
-
-    def step(self, flow_and_div, vertex_coordinates, div_integral):
+    def step_flow_and_div(self, flow_and_div, vertex_coordinates, div_integral):
         assert flow_and_div.ndim == 5
         assert vertex_coordinates.ndim == 3
         assert flow_and_div.shape[1] == 4
@@ -86,7 +82,7 @@ class IntegrateFlowDivRK4:
 
         return vertex_coordinates, div_integral
 
-    def _integrate_tensor(self, flow_and_div, vertex_coordinates):
+    def _integrate_flow_and_div_tensor(self, flow_and_div, vertex_coordinates):
         assert isinstance(vertex_coordinates, torch.Tensor)
 
         div_integral = 0
@@ -95,7 +91,7 @@ class IntegrateFlowDivRK4:
 
         return vertex_coordinates, div_integral
 
-    def _integrate_tensor_list(self, flow_and_div, vertex_coordinates_list):
+    def _integrate_flow_and_div_tensor_list(self, flow_and_div, vertex_coordinates_list):
         assert isinstance(vertex_coordinates_list, list)
 
         deformed_coordinates_list = []
@@ -116,12 +112,3 @@ class IntegrateFlowDivRK4:
         else:
             raise TypeError("Expected tensor or list of tensors for vertices but got " + type(vertices))
 
-    def integrate(self, flow_and_div, vertices):
-        if isinstance(vertices, torch.Tensor):
-            deformed_vertices, _ = self._integrate_tensor(flow_and_div, vertices)
-        elif isinstance(vertices, list):
-            deformed_vertices, _ = self._integrate_tensor_list(flow_and_div, vertices)
-        else:
-            raise TypeError("Expected tensor or list of tensors for vertices but got " + type(vertices))
-
-        return deformed_vertices

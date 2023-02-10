@@ -9,7 +9,7 @@ class UnetSegment(nn.Module):
         decoder_input_channels = uparm_channels[-1]
         self.decoder = nn.Conv3d(decoder_input_channels, output_channels, kernel_size=1)
 
-    @classmethod_
+    @classmethod
     def from_dict(cls, definition):
         input_size = definition["input_size"]
         input_channels = definition["input_channels"]

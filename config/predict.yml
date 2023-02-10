@@ -1,4 +1,4 @@
-output_dir: output/linear_transform_mcnn_5/predictions/meshes
-checkpoint: output/linear_transform_mcnn_5/best_model_dict.pth
+checkpoint: output/segmentation-flow-div10/best_model_dict.pth
+output_dir: output/segmentation-flow-div10/predictions/meshes
 template: data/template/highres_template.vtp
 dataset: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/validation
