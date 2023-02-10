@@ -56,7 +56,7 @@ def evaluate_model(net, dataset, loss_weights):
 
 
 def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation_dataset,
-                        loss_weights, save_best_model, eval_frequency=0.01):
+                        loss_weights, save_best_model, eval_frequency=0.1):
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
     assert eval_frequency > 0 and eval_frequency < 1
@@ -186,3 +186,7 @@ if __name__ == "__main__":
     train_loss, test_loss = run_training_loop(net, optimizer, scheduler, train_dataloader, validation_dataset,
                                               loss_weights,
                                               num_epochs, save_best_model)
+
+    output_data = np.array([train_loss, test_loss]).T
+    df_outfile = os.path.join(output_dir, "loss_history.csv")
+    np.savetxt(df_outfile, output_data, delimiter=",", header="train loss, test loss")

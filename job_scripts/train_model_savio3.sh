@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=Train-Seg-Flow-Div
+#SBATCH --job-name=Train-Seg-Flow-Div-10
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -26,5 +26,5 @@
 ## Command(s) to run (example):
 
 
-config_file=output/segmentation-flow-div/config.yml
+config_file=output/segmentation-flow-div10/config.yml
 python train_segmentation_flow.py -config $config_file

@@ -40,12 +40,12 @@ class LinearTransform(nn.Module):
         assert self.encoder_output_size > 2
 
         self.num_encoder_features = (self.encoder_output_size ** 3) * self.encoder_output_channels
-        self.linear_transform_parameters = nn.Sequential(nn.Linear(self.mlp_input_size, 128),
+        self.linear_transform_parameters = nn.Sequential(nn.Linear(self.num_encoder_features, 128),
                                                          nn.LeakyReLU(),
                                                          nn.Linear(128, 9))
 
         # Initialize weights to small values
-        final_layer = self.linear_transform_parameters
+        final_layer = self.linear_transform_parameters[-1]
         final_layer.weight = nn.Parameter(
             torch.distributions.normal.Normal(0, 1e-5).sample(final_layer.weight.shape))
         final_layer.bias = nn.Parameter(torch.zeros(final_layer.bias.shape))
@@ -127,5 +127,6 @@ class LinearTransformWithEncoder(LinearTransform):
 
     def encode(self, image):
         encoding = self.pretrained_encoder(image)
+        encoding = torch.cat([image, encoding], dim=1)
         encoding = self.encoder(encoding)
         return encoding
