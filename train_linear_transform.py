@@ -1,4 +1,4 @@
-from src.linear_transform import LinearTransformWithEncoder
+from src.linear_transform import LinearTransformNet, LinearTransformWithEncoder
 from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_dataloader
 from src.template import Template, BatchTemplate
 from src.loss import average_chamfer_distance_between_meshes
@@ -178,7 +178,9 @@ if __name__ == "__main__":
     template = Template.from_vtk(tmplt_fn, device=device)
 
     net_config = config["model"]
-    net = LinearTransformWithEncoder.from_dict(net_config)
+    pretrained_encoder = torch.load(net_config["pretrained_encoder"], map_location=device)
+    linear_transform = LinearTransformNet.from_dict(net_config["decoder"])
+    net = LinearTransformWithEncoder(pretrained_encoder, linear_transform)
     net.to(device)
 
     optimizer_config = config["train"]["optimizer"]
