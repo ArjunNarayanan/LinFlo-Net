@@ -69,7 +69,8 @@ class MultilayerCNN(nn.Module):
     def __init__(self, input_shape, input_channels, first_layer_channels, downarm_channels):
         super().__init__()
 
-        self.input_shape = torch.Size(input_shape)
+        input_shape_list = 3*[input_shape]
+        self.input_shape = torch.Size(input_shape_list)
         self.input_channels = input_channels
         self.first_layer_channels = first_layer_channels
         self.downarm_channels = downarm_channels

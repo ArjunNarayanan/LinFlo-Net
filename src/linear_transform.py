@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
-from src.unet_components import MultilayerCNN, SimpleCNN
+from src.unet_components import MultilayerCNN
 from pytorch3d.transforms import Scale, Translate, Rotate, euler_angles_to_matrix
 
 
-class LinearTransformer:
+class LinearTransformer(nn.Module):
     def __init__(self, scale_factors, translations, euler_angles):
         self.scale = Scale(scale_factors)
         self.translate = Translate(translations)
@@ -12,12 +12,18 @@ class LinearTransformer:
         self.rotate = Rotate(rot_mat)
 
     def transform(self, vertices):
+        # transform vertices to [-1,1]
         vertices = 2 * vertices - 1
         vertices = self.scale.transform_points(vertices)
         vertices = self.rotate.transform_points(vertices)
         vertices = self.translate.transform_points(vertices)
+
+        # transform vertices to [0,1]
         vertices = (vertices + 1) / 2
         return vertices
+
+    def forward(self, vertices):
+        return self.transform(vertices)
 
 
 class LinearTransformNet(nn.Module):
@@ -28,7 +34,7 @@ class LinearTransformNet(nn.Module):
 
         num_conv = len(downarm_channels)
         self.encoder_output_channels = downarm_channels[-1]
-        self.encoder_output_size = input_shape[0] // (2 ** num_conv)
+        self.encoder_output_size = input_shape // (2 ** num_conv)
         assert self.encoder_output_size > 2
 
         self.num_encoder_features = (self.encoder_output_size ** 3) * self.encoder_output_channels

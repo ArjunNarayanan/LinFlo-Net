@@ -9,7 +9,6 @@ from src.template import Template, BatchTemplate
 from torch.nn import CrossEntropyLoss
 import time
 import yaml
-from torch.utils.data import DataLoader
 
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
@@ -27,7 +26,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-config_fn = "output/linear_transform_with_encoder/config.yml"
+config_fn = "output/linear_transform/linear_transform_with_encoder/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 

@@ -54,7 +54,7 @@ def step_training_epoch(epoch,
                         template,
                         loss_config,
                         save_best_model,
-                        eval_frequency=0.01):
+                        eval_frequency=0.1):
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
 
