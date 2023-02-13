@@ -1,10 +1,11 @@
 from src.unet import *
 import src.finite_difference as fd
+from src.utilities import batch_occupancy_map_from_vertices
 
 
 class Flow(nn.Module):
     def __init__(self,
-                 input_size,
+                 input_shape,
                  input_channels,
                  unet_first_layer_channels,
                  downarm_channels,
@@ -14,8 +15,8 @@ class Flow(nn.Module):
         assert clip_flow > 0
         super().__init__()
 
-        self.input_size = input_size
-        input_size_list = 3 * [input_size]
+        self.input_shape = input_shape
+        input_size_list = 3 * [input_shape]
         self.encoder = Unet(input_size_list, input_channels, unet_first_layer_channels, downarm_channels,
                             uparm_channels)
         decoder_input_channels = uparm_channels[-1]
@@ -53,6 +54,7 @@ class Flow(nn.Module):
         return flow
 
     def get_flow_field(self, image):
+        assert image.ndim == 5
         encoding = self.encoder(image)
         encoding = self.flow_decoder(encoding)
         flow = self.flow(encoding)
@@ -139,3 +141,37 @@ class FlowPredictor(nn.Module):
         return deformed_vertices
 
 
+class EncodeLinearTransformFlow(nn.Module):
+    def __init__(self, encoder, linear_transform, flow, integrator):
+        super().__init__()
+
+        self.encoder = encoder
+        self.linear_transform = linear_transform
+        self.flow = flow
+        self.integrator = integrator
+
+        for param in self.encoder.parameters():
+            param.requires_grad = False
+
+        for param in self.linear_transform.parameters():
+            param.requires_grad = False
+
+    def forward(self, image, vertices):
+        assert image.ndim == 5
+        batch_size = image.shape[0]
+        assert all(v.shape[0] == batch_size for v in vertices)
+        assert all(v.ndim == 3 for v in vertices)
+        assert all(v.shape[-1] == 3 for v in vertices)
+
+        encoding = self.encoder(image)
+        encoding = torch.cat([image, encoding], dim=1)
+
+        lt_deformed_vertices = self.linear_transform(encoding, vertices)
+        occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, self.flow.input_shape)
+
+        encoding = torch.cat([encoding, occupancy], dim=1)
+
+        flow = self.flow.get_flow_field(encoding)
+        deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)
+
+        return deformed_vertices
