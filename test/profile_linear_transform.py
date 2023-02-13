@@ -3,7 +3,7 @@ import sys
 import os
 sys.path.append(os.getcwd())
 from src.dataset import image_segmentation_mesh_dataloader
-from src.linear_transform import LinearTransformWithEncoder
+from src.linear_transform import LinearTransformWithEncoder, LinearTransformNet
 from src.loss import SoftDiceLoss, average_chamfer_distance_between_meshes
 from src.template import Template, BatchTemplate
 from torch.nn import CrossEntropyLoss
@@ -26,13 +26,15 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-config_fn = "output/linear_transform/linear_transform_with_encoder/config.yml"
+config_fn = "output/linear_transform/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
 
 net_config = config["model"]
-net = LinearTransformWithEncoder.from_dict(net_config)
+pretrained_encoder = torch.load(net_config["pretrained_encoder"], map_location=device)
+linear_transform = LinearTransformNet.from_dict(net_config["decoder"])
+net = LinearTransformWithEncoder(pretrained_encoder, linear_transform)
 net.to(device)
 
 dice_loss_evaluator = SoftDiceLoss()

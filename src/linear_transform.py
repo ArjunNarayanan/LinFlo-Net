@@ -4,7 +4,7 @@ from src.unet_components import MultilayerCNN
 from pytorch3d.transforms import Scale, Translate, Rotate, euler_angles_to_matrix
 
 
-class LinearTransformer(nn.Module):
+class LinearTransformer:
     def __init__(self, scale_factors, translations, euler_angles):
         self.scale = Scale(scale_factors)
         self.translate = Translate(translations)
@@ -21,9 +21,6 @@ class LinearTransformer(nn.Module):
         # transform vertices to [0,1]
         vertices = (vertices + 1) / 2
         return vertices
-
-    def forward(self, vertices):
-        return self.transform(vertices)
 
 
 class LinearTransformNet(nn.Module):

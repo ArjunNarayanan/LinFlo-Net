@@ -26,5 +26,5 @@
 ## Command(s) to run (example):
 
 
-config_file=output/linear_transform_with_encoder/config.yml
+config_file=output/linear_transform/config.yml
 python train_linear_transform.py -config $config_file
