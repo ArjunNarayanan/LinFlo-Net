@@ -39,7 +39,7 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         encoding = torch.cat([image, encoding], dim=1)
         lt_deformed_vertices = net.linear_transform(encoding, batched_verts)
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, 1, net.flow.input_shape)
-        encoding - torch.cat([encoding, occupancy], dim=1)
+        encoding = torch.cat([encoding, occupancy], dim=1)
         with torch.no_grad():
             flow = net.flow.get_flow_field(encoding)
 
@@ -112,7 +112,7 @@ def step_training_epoch(
         encoding = torch.cat([image, encoding], dim=1)
         lt_deformed_vertices = net.linear_transform(encoding, batched_verts)
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, net.flow.input_shape)
-        encoding - torch.cat([encoding, occupancy], dim=1)
+        encoding = torch.cat([encoding, occupancy], dim=1)
         flow = net.flow.get_flow_field(encoding)
         flow_and_div = flow_div.get_flow_div(flow)
 

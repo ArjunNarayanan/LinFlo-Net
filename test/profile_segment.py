@@ -2,7 +2,7 @@ import torch
 import sys
 import os
 sys.path.append(os.getcwd())
-from src.dataset import ImageSegmentationDataset
+from src.dataset import ImageSegmentationMeshDataset
 from src.unet_segment import UnetSegment
 from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
@@ -45,7 +45,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr = 1e-3, weight_decay = 1e-4)
 
 data_fn = config["data"]["train_folder"]
 batch_size = config["train"]["batch_size"]
-dataset = ImageSegmentationDataset(data_fn)
+dataset = ImageSegmentationMeshDataset(data_fn)
 dataloader = DataLoader(dataset, shuffle=True, batch_size=batch_size)
 
 
