@@ -34,15 +34,15 @@ def mean_divergence_loss(div_integral):
     return mean_divergence
 
 
-config_fn = "output/linear_transform/config.yml"
+config_fn = "output/flow/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
 net_config = config["model"]
 pretrained_encoder = torch.load(net_config["pretrained_encoder"], map_location=device)
 linear_transform = torch.load(net_config["pretrained_linear_transform"], map_location=device)
-flow = Flow.from_dict(config["flow"])
-integrator = IntegrateFlowDivRK4(config["integrator"]["num_steps"])
+flow = Flow.from_dict(net_config["flow"])
+integrator = IntegrateFlowDivRK4(net_config["integrator"]["num_steps"])
 net = EncodeLinearTransformFlow(pretrained_encoder, linear_transform, flow, integrator)
 net.to(device)
 

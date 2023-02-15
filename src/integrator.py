@@ -87,7 +87,7 @@ class IntegrateFlowDivRK4(IntegrateRK4):
 
         div_integral = 0
         for step in range(self.num_steps):
-            vertex_coordinates, div_integral = self.step(flow_and_div, vertex_coordinates, div_integral)
+            vertex_coordinates, div_integral = self.step_flow_and_div(flow_and_div, vertex_coordinates, div_integral)
 
         return vertex_coordinates, div_integral
 
@@ -98,7 +98,7 @@ class IntegrateFlowDivRK4(IntegrateRK4):
         div_integral_list = []
 
         for coords in vertex_coordinates_list:
-            dc, di = self._integrate_tensor(flow_and_div, coords)
+            dc, di = self._integrate_flow_and_div_tensor(flow_and_div, coords)
             deformed_coordinates_list.append(dc)
             div_integral_list.append(di)
 
@@ -106,9 +106,9 @@ class IntegrateFlowDivRK4(IntegrateRK4):
 
     def integrate_flow_and_div(self, flow_and_div, vertices):
         if isinstance(vertices, torch.Tensor):
-            return self._integrate_tensor(flow_and_div, vertices)
+            return self._integrate_flow_and_div_tensor(flow_and_div, vertices)
         elif isinstance(vertices, list):
-            return self._integrate_tensor_list(flow_and_div, vertices)
+            return self._integrate_flow_and_div_tensor_list(flow_and_div, vertices)
         else:
             raise TypeError("Expected tensor or list of tensors for vertices but got " + type(vertices))
 

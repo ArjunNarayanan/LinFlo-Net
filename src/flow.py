@@ -31,14 +31,14 @@ class Flow(nn.Module):
 
     @classmethod
     def from_dict(cls, definition):
-        input_size = definition["input_size"]
+        input_shape = definition["input_shape"]
         input_channels = definition["input_channels"]
-        unet_first_channels = definition["unet_first_channels"]
+        unet_first_channels = definition["first_layer_channels"]
         downarm_channels = definition["downarm_channels"]
         uparm_channels = definition["uparm_channels"]
         decoder_hidden_channels = definition["decoder_hidden_channels"]
         clip_flow = definition["clip_flow"]
-        return cls(input_size,
+        return cls(input_shape,
                    input_channels,
                    unet_first_channels,
                    downarm_channels,
