@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as func
 from torch.nn.modules.loss import _Loss
 import numpy as np
-from pytorch3d.loss import chamfer_distance
+from pytorch3d.loss import chamfer_distance, mesh_edge_loss, mesh_laplacian_smoothing, mesh_normal_consistency
 
 
 class SoftDiceLoss(_Loss):
@@ -84,3 +84,18 @@ def average_chamfer_distance_between_meshes(mesh_list1, mesh_list2, norm):
     avg_chd = sum(chd) / num_meshes
     avg_chn = sum(chn) / num_meshes
     return avg_chd, avg_chn
+
+
+def average_mesh_edge_loss(mesh_list):
+    edge_loss = [mesh_edge_loss(mesh) for mesh in mesh_list]
+    return sum(edge_loss) / len(edge_loss)
+
+
+def average_laplacian_smoothing_loss(mesh_list, method="uniform"):
+    laplacian_loss = [mesh_laplacian_smoothing(mesh, method=method) for mesh in mesh_list]
+    return sum(laplacian_loss) / len(laplacian_loss)
+
+
+def average_normal_consistency_loss(mesh_list):
+    normal_consistency_loss = [mesh_normal_consistency(mesh) for mesh in mesh_list]
+    return sum(normal_consistency_loss) / len(normal_consistency_loss)

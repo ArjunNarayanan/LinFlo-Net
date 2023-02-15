@@ -3,7 +3,7 @@ import torch.optim.lr_scheduler
 from src.flow import EncodeLinearTransformFlow, Flow, FlowDiv
 from src.utilities import batch_occupancy_map_from_vertices
 from src.integrator import IntegrateFlowDivRK4
-from src.loss import average_chamfer_distance_between_meshes
+from src.loss import *
 from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_dataloader
 from src.io_utils import SaveBestModel
 from src.template import Template, BatchTemplate
@@ -23,12 +23,11 @@ def mean_divergence_loss(div_integral):
 
 def evaluate_model(net, dataset, batched_template, loss_config):
     assert len(dataset) > 0.0
-    avg_loss = np.zeros(3)
+    avg_loss = 0.0
 
     print("\n\n\tEVALUATING TEST LOSS\n\n")
     batched_verts = batched_template.batch_vertex_coordinates()
     norm_type = loss_config["norm_type"]
-    flow_div = FlowDiv(net.flow.input_shape)
 
     net.eval()
     for (idx, data) in enumerate(dataset):
@@ -43,31 +42,23 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         with torch.no_grad():
             flow = net.flow.get_flow_field(encoding)
 
-        flow_and_div = flow_div.get_flow_div(flow)
-
-        deformed_verts, div_integral = net.integrator.integrate_flow_and_div(flow_and_div, batched_verts)
+        deformed_verts = net.integrator.integrate(flow, batched_verts)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
-        mean_divergence = mean_divergence_loss(div_integral)
-        chd, chn = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
+        chd, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
 
-        avg_loss[0] += chd.item() * loss_config["chamfer_distance"]
-        avg_loss[1] += chn.item() * loss_config["chamfer_normal"]
-        avg_loss[2] += mean_divergence.item() * loss_config["divergence"]
+        avg_loss += chd
 
     num_data_points = len(dataset)
     avg_loss /= num_data_points
-    total = avg_loss.sum()
 
-    out_str = "\tCHD {:1.3e} | CHN {:1.3e} | MD {:1.3e} | TOT {:1.3e}".format(
-        avg_loss[0], avg_loss[1], avg_loss[2], total
-    )
+    out_str = "\tAVG. VALIDATION CHAMFER DISTANCE : {:1.3e}".format(avg_loss.item())
     print(out_str)
     print("\n\n")
 
     net.train()
 
-    return total
+    return avg_loss
 
 
 def step_training_epoch(
@@ -97,6 +88,9 @@ def step_training_epoch(
     chamfer_distance_weight = loss_config["chamfer_distance"]
     chamfer_normal_weight = loss_config["chamfer_normal"]
     divergence_weight = loss_config["divergence"]
+    edge_loss_weight = loss_config["edge"]
+    laplace_loss_weight = loss_config["laplace"]
+    normal_consistency_loss_weight = loss_config["normal"]
 
     for (idx, data) in enumerate(dataloader):
         optimizer.zero_grad(set_to_none=True)
@@ -125,15 +119,21 @@ def step_training_epoch(
         chd *= chamfer_distance_weight
         chn *= chamfer_normal_weight
 
-        loss = chd + chn + divergence_loss
+        edge_loss = average_mesh_edge_loss(batched_template.meshes_list) * edge_loss_weight
+        laplace_loss = average_laplacian_smoothing_loss(batched_template.meshes_list) * laplace_loss_weight
+        normal_loss = average_normal_consistency_loss(batched_template.meshes_list) * normal_consistency_loss_weight
+
+        loss = chd + chn + divergence_loss + edge_loss + laplace_loss + normal_loss
         loss.backward()
         optimizer.step()
 
         avg_train_loss += loss.item()
         lr = optimizer.param_groups[0]["lr"]
 
-        out_str = "\tBatch {:04d} | CHD {:1.3e} | CHN {:1.3e} | MD {:1.3e} | TOT {:1.3e} | LR {:1.3e}".format(
-            idx, chd.item(), chn.item(), divergence_loss.item(), loss.item(), lr
+        out_str = ("\tBatch {:04d} | CHD {:1.3e} | CHN {:1.3e} | MD {:1.3e} | ED {:1.3e} | " + \
+                   "LP {:1.3e} | NR {:1.3e} | TOT {:1.3e} | LR {:1.3e}").format(
+            idx, chd.item(), chn.item(), divergence_loss.item(), edge_loss.item(), laplace_loss.item(),
+            normal_loss.item(), loss.item(), lr
         )
         print(out_str)
 

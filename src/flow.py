@@ -1,6 +1,6 @@
 from src.unet import *
 import src.finite_difference as fd
-from src.utilities import batch_occupancy_map_from_vertices
+from src.utilities import batch_occupancy_map_from_vertices, occupancy_map
 
 
 class Flow(nn.Module):
@@ -156,18 +156,26 @@ class EncodeLinearTransformFlow(nn.Module):
         for param in self.linear_transform.parameters():
             param.requires_grad = False
 
+    def get_occupancy(self, vertices, batch_size, input_shape):
+        if isinstance(vertices, list):
+            occupancy = batch_occupancy_map_from_vertices(vertices, batch_size, input_shape)
+        elif isinstance(vertices, torch.Tensor):
+            occupancy = occupancy_map(vertices, input_shape)
+            occupancy = occupancy.unsqueeze(0)
+        else:
+            raise ValueError("Expected vertices to be list of tensors or tensor, got ", type(vertices))
+
+        return occupancy
+
     def forward(self, image, vertices):
         assert image.ndim == 5
         batch_size = image.shape[0]
-        assert all(v.shape[0] == batch_size for v in vertices)
-        assert all(v.ndim == 3 for v in vertices)
-        assert all(v.shape[-1] == 3 for v in vertices)
 
         encoding = self.encoder(image)
         encoding = torch.cat([image, encoding], dim=1)
 
         lt_deformed_vertices = self.linear_transform(encoding, vertices)
-        occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, self.flow.input_shape)
+        occupancy = self.get_occupancy(vertices, batch_size, self.flow.input_shape)
 
         encoding = torch.cat([encoding, occupancy], dim=1)
 
