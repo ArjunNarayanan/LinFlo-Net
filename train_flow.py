@@ -40,9 +40,9 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, 1, net.flow.input_shape)
         encoding = torch.cat([encoding, occupancy], dim=1)
         with torch.no_grad():
-            flow = net.flow.get_flow_field(encoding)
+            flow_field = net.flow.get_flow_field(encoding)
 
-        deformed_verts = net.integrator.integrate(flow, lt_deformed_vertices)
+        deformed_verts = net.integrator.integrate(flow_field, lt_deformed_vertices)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
         chd, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
@@ -107,8 +107,8 @@ def step_training_epoch(
         lt_deformed_vertices = net.linear_transform(encoding, batched_verts)
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, net.flow.input_shape)
         encoding = torch.cat([encoding, occupancy], dim=1)
-        flow = net.flow.get_flow_field(encoding)
-        flow_and_div = flow_div.get_flow_div(flow)
+        flow_field = net.flow.get_flow_field(encoding)
+        flow_and_div = flow_div.get_flow_div(flow_field)
 
         deformed_verts, div_integral = net.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
@@ -213,9 +213,9 @@ if __name__ == "__main__":
     model_config = config["model"]
     encoder = torch.load(model_config["pretrained_encoder"], map_location=device)
     linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
-    flow = Flow.from_dict(model_config["flow"])
+    flow_transform = Flow.from_dict(model_config["flow"])
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
-    net = EncodeLinearTransformFlow(encoder, linear_transform, flow, integrator)
+    net = EncodeLinearTransformFlow(encoder, linear_transform, flow_transform, integrator)
     net.to(device)
 
     optimizer_config = config["train"]["optimizer"]
