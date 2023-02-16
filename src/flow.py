@@ -175,7 +175,7 @@ class EncodeLinearTransformFlow(nn.Module):
         encoding = torch.cat([image, encoding], dim=1)
 
         lt_deformed_vertices = self.linear_transform(encoding, vertices)
-        occupancy = self.get_occupancy(vertices, batch_size, self.flow.input_shape)
+        occupancy = self.get_occupancy(lt_deformed_vertices, batch_size, self.flow.input_shape)
 
         encoding = torch.cat([encoding, occupancy], dim=1)
 
