@@ -42,7 +42,7 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         with torch.no_grad():
             flow = net.flow.get_flow_field(encoding)
 
-        deformed_verts = net.integrator.integrate(flow, batched_verts)
+        deformed_verts = net.integrator.integrate(flow, lt_deformed_vertices)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
         chd, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)

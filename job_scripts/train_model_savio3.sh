@@ -26,5 +26,5 @@
 ## Command(s) to run (example):
 
 
-config_file=output/flow/config.yml
+config_file=output/flow/chn-01/config.yml
 python train_flow.py -config $config_file

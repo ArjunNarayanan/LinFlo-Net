@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=Train-Segmentation
+#SBATCH --job-name=Train-Seg-LT-Flow-CN-05
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -24,10 +24,10 @@
 #SBATCH --gres=gpu:1
 #
 # Wall clock limit:
-#SBATCH --time=00:10:00
+#SBATCH --time=70:00:00
 #
 ## Command(s) to run (example):
 
 
-config_file=config/train_model.yml
-python train_model.py -config $config_file
+config_file=output/flow/chn-05/config.yml
+python train_flow.py -config $config_file
