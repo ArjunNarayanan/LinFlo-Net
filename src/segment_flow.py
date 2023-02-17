@@ -23,7 +23,7 @@ class ClipFlow:
         assert flow.ndim == 5
         assert flow.shape[1] == 3
 
-        clip_flow = self.clip_flow
+        clip_flow = self.clip_value
         norm = torch.norm(flow, dim=1, keepdim=True)
         norm = torch.clamp(norm, min=clip_flow)
         flow = clip_flow * (flow / norm)
@@ -32,6 +32,8 @@ class ClipFlow:
 
 class Decoder(nn.Module):
     def __init__(self, input_channels, hidden_channels, output_channels):
+        super().__init__()
+
         self.input_channels = input_channels
         self.hidden_channels = hidden_channels
         self.output_channels = output_channels
@@ -50,8 +52,8 @@ class FlowDecoder(Decoder):
         super().__init__(input_channels, hidden_channels, 3)
         self.clip_flow = ClipFlow(clip_value)
 
-        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.flow.weight.shape))
-        self.decoder.bias = nn.Parameter(torch.zeros(self.flow.bias.shape))
+        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
 
     def forward(self, x):
         flow = super().forward(x)
@@ -79,6 +81,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
                  segment_decoder,
                  flow_decoder,
                  integrator):
+        super().__init__()
 
         self.pretrained_encoder = pretrained_encoder
         self.pretrained_linear_transform = pretrained_linear_transform
@@ -100,12 +103,13 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         pre_encoding = self.pretrained_encoder(image)
         pre_encoding = torch.cat([image, pre_encoding], dim=1)
 
-        lt_deformed_vertices = self.linear_transform(pre_encoding, vertices)
+        lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, vertices)
 
         encoding = self.encoder(pre_encoding)
         # segmentation = self.segment_decoder(encoding)
 
-        occupancy = get_occupancy(lt_deformed_vertices, batch_size, self.flow.input_shape)
+        input_shape = image.shape[-1]
+        occupancy = get_occupancy(lt_deformed_vertices, batch_size, input_shape)
         encoding = torch.cat([encoding, occupancy], dim=1)
         flow = self.flow_decoder(encoding)
         deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)

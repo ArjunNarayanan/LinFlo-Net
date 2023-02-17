@@ -75,7 +75,7 @@ def step_training_epoch(
     norm_type = loss_config["norm_type"]
     print("USING NORM TYPE : ", norm_type)
 
-    flow_div = FlowDiv(net.flow.input_shape)
+    flow_div = FlowDiv(INPUT_SHAPE)
     cross_entropy_evaluator = CrossEntropyLoss(reduction="mean")
 
     chamfer_distance_weight = loss_config["chamfer_distance"]

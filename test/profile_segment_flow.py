@@ -61,11 +61,12 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "output/flow/config.yml"
+config_fn = "output/segment_flow/model-1/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
 net_config = config["model"]
+input_shape = net_config["encoder"]["input_shape"]
 net = initialize_model(net_config)
 net.to(device)
 
@@ -84,7 +85,7 @@ template = Template.from_vtk(template_fn, device=device)
 batched_template = BatchTemplate.from_single_template(template, batch_size)
 batched_verts = batched_template.batch_vertex_coordinates()
 
-flow_div = FlowDiv(net.flow.input_shape)
+flow_div = FlowDiv(input_shape)
 cross_entropy_evaluator = CrossEntropyLoss(reduction="mean")
 
 start = time.perf_counter()
@@ -124,7 +125,7 @@ print_memory_allocated("After segmentation :")
 
 
 start = time.perf_counter()
-occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, net.flow.input_shape)
+occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, input_shape)
 encoding = torch.cat([encoding, occupancy], dim=1)
 stop = time.perf_counter()
 print_memory_allocated("After occupancy map :")

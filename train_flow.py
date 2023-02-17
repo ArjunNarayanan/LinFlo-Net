@@ -33,9 +33,9 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         image = data["image"].unsqueeze(0).to(device).to(memory_format=torch.channels_last_3d)
         gt_meshes = [m.to(device) for m in data["meshes"]]
 
-        encoding = net.pretrained_encoder(image)
+        encoding = net.encoder(image)
         encoding = torch.cat([image, encoding], dim=1)
-        lt_deformed_vertices = net.pretrained_linear_transform(encoding, batched_verts)
+        lt_deformed_vertices = net.linear_transform(encoding, batched_verts)
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, 1, net.flow.input_shape)
         encoding = torch.cat([encoding, occupancy], dim=1)
 
@@ -100,9 +100,9 @@ def step_training_epoch(
         batched_template = BatchTemplate.from_single_template(template, batch_size)
         batched_verts = batched_template.batch_vertex_coordinates()
 
-        encoding = net.pretrained_encoder(image)
+        encoding = net.encoder(image)
         encoding = torch.cat([image, encoding], dim=1)
-        lt_deformed_vertices = net.pretrained_linear_transform(encoding, batched_verts)
+        lt_deformed_vertices = net.linear_transform(encoding, batched_verts)
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, net.flow.input_shape)
         encoding = torch.cat([encoding, occupancy], dim=1)
         flow_field = net.flow.get_flow_field(encoding)
