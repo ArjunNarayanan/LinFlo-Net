@@ -127,7 +127,7 @@ def step_training_epoch(
         loss.backward()
         optimizer.step()
 
-        avg_train_loss += loss.item()
+        avg_train_loss += chd.item()
         lr = optimizer.param_groups[0]["lr"]
 
         out_str = ("\tBatch {:04d} | CHD {:1.3e} | CHN {:1.3e} | MD {:1.3e} | ED {:1.3e} | " + \

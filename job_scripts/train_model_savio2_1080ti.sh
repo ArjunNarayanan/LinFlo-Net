@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=Train-Seg-LT-Flow-CN-05
+#SBATCH --job-name=Train-Flow-LP-20
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -29,5 +29,5 @@
 ## Command(s) to run (example):
 
 
-config_file=output/flow/chn-05/config.yml
+config_file=output/flow/LP-20/config.yml
 python train_flow.py -config $config_file

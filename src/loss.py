@@ -91,8 +91,8 @@ def average_mesh_edge_loss(mesh_list):
     return sum(edge_loss) / len(edge_loss)
 
 
-def average_laplacian_smoothing_loss(mesh_list, method="uniform"):
-    laplacian_loss = [mesh_laplacian_smoothing(mesh, method=method) for mesh in mesh_list]
+def average_laplacian_smoothing_loss(mesh_list):
+    laplacian_loss = [mesh_laplacian_smoothing(mesh) for mesh in mesh_list]
     return sum(laplacian_loss) / len(laplacian_loss)
 
 
