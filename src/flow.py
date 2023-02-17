@@ -62,61 +62,6 @@ class Flow(nn.Module):
         return flow
 
 
-class SegmentFlow(Flow):
-    def __init__(self,
-                 input_size,
-                 input_channels,
-                 unet_first_layer_channels,
-                 downarm_channels,
-                 uparm_channels,
-                 decoder_hidden_channels,
-                 num_classes,
-                 clip_flow):
-        super().__init__(input_size,
-                         input_channels,
-                         unet_first_layer_channels,
-                         downarm_channels,
-                         uparm_channels,
-                         decoder_hidden_channels,
-                         clip_flow)
-
-        decoder_input_channels = uparm_channels[-1]
-        self.num_classes = num_classes
-        self.segmentation_decoder = ConvINormConv(decoder_input_channels, decoder_hidden_channels)
-        self.segmentation = nn.Conv3d(decoder_hidden_channels, num_classes, kernel_size=1)
-
-    @classmethod
-    def from_dict(cls, definition):
-        input_size = definition["input_size"]
-        input_channels = definition["input_channels"]
-        unet_first_channels = definition["unet_first_channels"]
-        downarm_channels = definition["downarm_channels"]
-        uparm_channels = definition["uparm_channels"]
-        decoder_hidden_channels = definition["decoder_hidden_channels"]
-        num_classes = definition["num_classes"]
-        clip_flow = definition["clip_flow"]
-        return cls(input_size,
-                   input_channels,
-                   unet_first_channels,
-                   downarm_channels,
-                   uparm_channels,
-                   decoder_hidden_channels,
-                   num_classes,
-                   clip_flow)
-
-    def get_segmentation_and_flow(self, image):
-        encoding = self.encoder(image)
-
-        seg_encoding = self.segmentation_decoder(encoding)
-        segmentation = self.segmentation(seg_encoding)
-
-        flow_encoding = self.flow_encoder(encoding)
-        flow = self.flow(flow_encoding)
-        flow = self._clip_flow_field(flow)
-
-        return segmentation, flow
-
-
 class FlowDiv:
     def __init__(self, input_size):
         assert input_size > 1
@@ -126,19 +71,6 @@ class FlowDiv:
         flow_div = fd.batch_divergence3d(flow_field, self.spacing)
         flow_and_div = torch.cat([flow_field, flow_div], dim=1)
         return flow_and_div
-
-
-class FlowPredictor(nn.Module):
-    def __init__(self, flow, integrator):
-        super().__init__()
-
-        self.flow = flow
-        self.integrator = integrator
-
-    def forward(self, image, vertices):
-        flow = self.flow.get_flow_field(image)
-        deformed_vertices = self.integrator.integrate(flow, vertices)
-        return deformed_vertices
 
 
 class EncodeLinearTransformFlow(nn.Module):

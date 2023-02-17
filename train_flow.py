@@ -29,7 +29,6 @@ def evaluate_model(net, dataset, batched_template, loss_config):
     batched_verts = batched_template.batch_vertex_coordinates()
     norm_type = loss_config["norm_type"]
 
-    net.eval()
     for (idx, data) in enumerate(dataset):
         image = data["image"].unsqueeze(0).to(device).to(memory_format=torch.channels_last_3d)
         gt_meshes = [m.to(device) for m in data["meshes"]]
@@ -39,6 +38,7 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         lt_deformed_vertices = net.linear_transform(encoding, batched_verts)
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, 1, net.flow.input_shape)
         encoding = torch.cat([encoding, occupancy], dim=1)
+
         with torch.no_grad():
             flow_field = net.flow.get_flow_field(encoding)
 
@@ -55,8 +55,6 @@ def evaluate_model(net, dataset, batched_template, loss_config):
     out_str = "\tAVG. VALIDATION CHAMFER DISTANCE : {:1.3e}".format(avg_loss.item())
     print(out_str)
     print("\n\n")
-
-    net.train()
 
     return avg_loss
 
