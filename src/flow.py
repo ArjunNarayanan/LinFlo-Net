@@ -25,7 +25,6 @@ class Flow(nn.Module):
         self.flow = nn.Conv3d(decoder_hidden_channels, 3, kernel_size=1)
         self.clip_flow = clip_flow
 
-        # Initialize flow weights to small value
         self.flow.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.flow.weight.shape))
         self.flow.bias = nn.Parameter(torch.zeros(self.flow.bias.shape))
 

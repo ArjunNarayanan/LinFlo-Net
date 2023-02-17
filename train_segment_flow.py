@@ -1,6 +1,7 @@
 import os
 import torch.optim.lr_scheduler
-from src.flow import EncodeLinearTransformFlow, Flow, FlowDiv
+from torch.nn import CrossEntropyLoss
+from src.segment_flow import *
 from src.utilities import batch_occupancy_map_from_vertices
 from src.integrator import IntegrateFlowDivRK4
 from src.loss import *
@@ -33,16 +34,9 @@ def evaluate_model(net, dataset, batched_template, loss_config):
         image = data["image"].unsqueeze(0).to(device).to(memory_format=torch.channels_last_3d)
         gt_meshes = [m.to(device) for m in data["meshes"]]
 
-        encoding = net.pretrained_encoder(image)
-        encoding = torch.cat([image, encoding], dim=1)
-        lt_deformed_vertices = net.pretrained_linear_transform(encoding, batched_verts)
-        occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, 1, net.flow.input_shape)
-        encoding = torch.cat([encoding, occupancy], dim=1)
-
         with torch.no_grad():
-            flow_field = net.flow.get_flow_field(encoding)
+            deformed_verts = net(image, batched_verts)
 
-        deformed_verts = net.integrator.integrate(flow_field, lt_deformed_vertices)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
         chd, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
@@ -82,6 +76,7 @@ def step_training_epoch(
     print("USING NORM TYPE : ", norm_type)
 
     flow_div = FlowDiv(net.flow.input_shape)
+    cross_entropy_evaluator = CrossEntropyLoss(reduction="mean")
 
     chamfer_distance_weight = loss_config["chamfer_distance"]
     chamfer_normal_weight = loss_config["chamfer_normal"]
@@ -89,28 +84,35 @@ def step_training_epoch(
     edge_loss_weight = loss_config["edge"]
     laplace_loss_weight = loss_config["laplace"]
     normal_consistency_loss_weight = loss_config["normal"]
+    cross_entropy_weight = loss_config["cross_entropy"]
 
     for (idx, data) in enumerate(dataloader):
         optimizer.zero_grad(set_to_none=True)
 
         image = data["image"].to(device).to(memory_format=torch.channels_last_3d)
         gt_meshes = [m.to(device) for m in data["meshes"]]
+        gt_segmentation = data["segmentation"].to(device)
 
         batch_size = image.shape[0]
         batched_template = BatchTemplate.from_single_template(template, batch_size)
         batched_verts = batched_template.batch_vertex_coordinates()
 
-        encoding = net.pretrained_encoder(image)
-        encoding = torch.cat([image, encoding], dim=1)
-        lt_deformed_vertices = net.pretrained_linear_transform(encoding, batched_verts)
-        occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, net.flow.input_shape)
+        pre_encoding = net.pretrained_encoder(image)
+        pre_encoding = torch.cat([image, pre_encoding], dim=1)
+        lt_deformed_vertices = net.pretrained_linear_transform(pre_encoding, batched_verts)
+
+        encoding = net.encoder(pre_encoding)
+        segmentation = net.segment_decoder(encoding)
+
+        occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, INPUT_SHAPE)
         encoding = torch.cat([encoding, occupancy], dim=1)
-        flow_field = net.flow.get_flow_field(encoding)
+        flow_field = net.flow_decoder(encoding)
         flow_and_div = flow_div.get_flow_div(flow_field)
 
         deformed_verts, div_integral = net.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
+        cross_entropy_loss = cross_entropy_weight * cross_entropy_evaluator(segmentation, gt_segmentation)
         divergence_loss = divergence_weight * mean_divergence_loss(div_integral)
 
         chd, chn = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
@@ -121,7 +123,7 @@ def step_training_epoch(
         laplace_loss = average_laplacian_smoothing_loss(batched_template.meshes_list) * laplace_loss_weight
         normal_loss = average_normal_consistency_loss(batched_template.meshes_list) * normal_consistency_loss_weight
 
-        loss = chd + chn + divergence_loss + edge_loss + laplace_loss + normal_loss
+        loss = chd + chn + divergence_loss + edge_loss + laplace_loss + normal_loss + cross_entropy_loss
         loss.backward()
         optimizer.step()
 
@@ -129,9 +131,9 @@ def step_training_epoch(
         lr = optimizer.param_groups[0]["lr"]
 
         out_str = ("\tBatch {:04d} | CHD {:1.3e} | CHN {:1.3e} | MD {:1.3e} | ED {:1.3e} | " + \
-                   "LP {:1.3e} | NR {:1.3e} | TOT {:1.3e} | LR {:1.3e}").format(
+                   "LP {:1.3e} | NR {:1.3e} | CE {:1.3e} | TOT {:1.3e} | LR {:1.3e}").format(
             idx, chd.item(), chn.item(), divergence_loss.item(), edge_loss.item(), laplace_loss.item(),
-            normal_loss.item(), loss.item(), lr
+            normal_loss.item(), cross_entropy_loss.item(), loss.item(), lr
         )
         print(out_str)
 
@@ -189,6 +191,32 @@ def get_config(config_fn):
     return config
 
 
+def initialize_model(model_config):
+    pretrained_encoder = torch.load(model_config["pretrained_encoder"], map_location=device)
+    pretrained_linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
+    encoder = Unet.from_dict(model_config["encoder"])
+
+    decoder_input_channels = model_config["encoder"]["uparm_channels"][-1]
+    decoder_hidden_channels = model_config["segment"]["decoder_hidden_channels"]
+    decoder_output_channels = model_config["segment"]["output_channels"]
+    segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
+
+    # since we add occupancy as a new channel, input channels increases by one
+    decoder_input_channels = decoder_input_channels + 1
+    decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
+    flow_clip_value = model_config["flow"]["clip"]
+    flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
+
+    integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
+    net = EncodeLinearTransformSegmentFlow(pretrained_encoder,
+                                           pretrained_linear_transform,
+                                           encoder,
+                                           segment_decoder,
+                                           flow_decoder,
+                                           integrator)
+    return net
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train Segmentation Flow")
     parser.add_argument("-config", help="path to config file")
@@ -209,11 +237,8 @@ if __name__ == "__main__":
     template = Template.from_vtk(tmplt_fn, device=device)
 
     model_config = config["model"]
-    encoder = torch.load(model_config["pretrained_encoder"], map_location=device)
-    linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
-    flow_transform = Flow.from_dict(model_config["flow"])
-    integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
-    net = EncodeLinearTransformFlow(encoder, linear_transform, flow_transform, integrator)
+    INPUT_SHAPE = model_config["encoder"]["input_shape"]
+    net = initialize_model(model_config)
     net.to(device)
 
     optimizer_config = config["train"]["optimizer"]

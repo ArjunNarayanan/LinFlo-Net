@@ -35,6 +35,15 @@ class Unet(nn.Module):
         outc = uparm_channels[-1]
         self.uparm.append(UpArm(inc, outc))
 
+    @classmethod
+    def from_dict(cls, definition):
+        input_shape = 3 * [definition["input_shape"]]
+        input_channels = definition["input_channels"]
+        first_layer_channels = definition["first_layer_channels"]
+        downarm_channels = definition["downarm_channels"]
+        uparm_channels = definition["uparm_channels"]
+        return cls(input_shape, input_channels, first_layer_channels, downarm_channels, uparm_channels)
+
     def forward_downarm(self, x):
 
         x = self.input_layer(x)
