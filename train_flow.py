@@ -47,12 +47,12 @@ def evaluate_model(net, dataset, batched_template, loss_config):
 
         chd, _ = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
 
-        avg_loss += chd
+        avg_loss += chd.item()
 
     num_data_points = len(dataset)
     avg_loss /= num_data_points
 
-    out_str = "\tAVG. VALIDATION CHAMFER DISTANCE : {:1.3e}".format(avg_loss.item())
+    out_str = "\tAVG. VALIDATION CHAMFER DISTANCE : {:1.3e}".format(avg_loss)
     print(out_str)
     print("\n\n")
 
