@@ -115,3 +115,43 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)
 
         return deformed_vertices
+
+
+class LinearTransformSegmentFlow(nn.Module):
+    def __init__(self,
+                 pretrained_linear_transform,
+                 encoder,
+                 segment_decoder,
+                 flow_decoder,
+                 integrator):
+        super().__init__()
+
+        self.pretrained_linear_transform = pretrained_linear_transform
+        self.encoder = encoder
+        self.segment_decoder = segment_decoder
+        self.flow_decoder = flow_decoder
+        self.integrator = integrator
+
+        for param in self.pretrained_linear_transform.parameters():
+            param.requires_grad = False
+
+    @staticmethod
+    def get_encoder_input(image, occupancy):
+        return torch.cat([image, occupancy], dim=1)
+
+    def forward(self, image, vertices):
+        assert image.ndim == 5
+        batch_size = image.shape[0]
+
+        lt_deformed_vertices = self.pretrained_linear_transform(image, vertices)
+        input_shape = image.shape[-1]
+        occupancy = get_occupancy(lt_deformed_vertices, batch_size, input_shape)
+        encoder_input = self.get_encoder_input(image, occupancy)
+
+        encoding = self.encoder(encoder_input)
+        # segmentation = self.segment_decoder(encoding)
+
+        flow = self.flow_decoder(encoding)
+        deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)
+
+        return deformed_vertices

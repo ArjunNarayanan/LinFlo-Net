@@ -1,7 +1,7 @@
 from loss import *
 
 
-def loss_components(predictions, ground_truth, loss_evaluators, loss_config):
+def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config):
     loss_components = {}
 
     # chamfer distance and normal

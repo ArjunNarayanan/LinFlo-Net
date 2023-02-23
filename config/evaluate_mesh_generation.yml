@@ -1,8 +1,8 @@
 info:
   input_size: [128, 128, 128]
 files:
-  model: output/segment_flow/model-1/best_model_dict.pth
-  out_dir: output/segment_flow/model-1/evaluation/mr
+  model: output/segment_flow/model-2/best_model_dict.pth
+  out_dir: output/segment_flow/model-2/evaluation/mr
   template: data/template/highres_template.vtp
   root_dir: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/raw_validation/mr
 modality: mr

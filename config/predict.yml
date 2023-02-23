@@ -1,4 +1,4 @@
-checkpoint: output/flow/LP-20/best_model_dict.pth
-output_dir: output/flow/LP-20/predictions/meshes
+checkpoint: output/segment_flow/model-2/best_model_dict.pth
+output_dir: output/segment_flow/model-2/predictions/meshes
 template: data/template/highres_template.vtp
 dataset: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/indexed_validation
