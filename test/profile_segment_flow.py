@@ -61,7 +61,7 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "output/segment_flow/model-1/config.yml"
+config_fn = "output/segment_flow/model-2/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
@@ -122,6 +122,7 @@ start = time.perf_counter()
 segmentation = net.segment_decoder(encoding)
 stop = time.perf_counter()
 print_memory_allocated("After segmentation :")
+print("Time : ", stop - start)
 
 
 start = time.perf_counter()

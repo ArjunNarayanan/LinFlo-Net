@@ -1,15 +1,15 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=Train-Seg-Flow-model-2
+#SBATCH --job-name=Train-direct-LT
 #
 # Account:
 #SBATCH --account=fc_biome
 #
 # Partition:
-#SBATCH --partition=savio2_1080ti
+#SBATCH --partition=savio3_gpu
 #
 # QoS:
-#SBATCH --qos=savio_normal
+#SBATCH --qos=savio_lowprio
 #
 # Number of nodes:
 #SBATCH --nodes=1
@@ -21,13 +21,13 @@
 #SBATCH --cpus-per-task=2
 #
 #Number of GPUs, this can be in the format of "gpu:[1-4]", or "gpu:K80:[1-4] with the type included
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:GTX2080TI:1
 #
 # Wall clock limit:
-#SBATCH --time=70:00:00
+#SBATCH --time=24:00:00
 #
 ## Command(s) to run (example):
 
 
-config_file=output/segment_flow/model-2/config.yml
-python train_segment_flow.py -config $config_file
+config_file=output/linear_transform/direct_linear_transform/config.yml
+python train_direct_linear_transform.py -config $config_file
