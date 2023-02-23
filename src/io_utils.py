@@ -16,9 +16,7 @@ class SaveBestModel:
     model state.
     """
 
-    def __init__(
-            self, output_fn, best_valid_loss=float('inf')
-    ):
+    def __init__(self, output_fn, best_valid_loss=float('inf')):
         self.best_valid_loss = best_valid_loss
         self.output_fn = output_fn
 

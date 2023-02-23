@@ -11,7 +11,7 @@ from src.template import Template, BatchTemplate
 import math
 import yaml
 import argparse
-import numpy as np
+import pandas as pd
 from collections import defaultdict
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
@@ -202,7 +202,19 @@ def run_training_loop(net,
         out_str = "AVG VALID LOSS : \t" + loss2str(avg_validation_loss)
         print(out_str)
 
-    return train_loss, validation_loss
+        print("\n\nWRITING LOSS DATA\n\n")
+        write_loss_data(train_loss, "train_loss.csv")
+        write_loss_data(validation_loss, "validation_loss.csv")
+
+    print("\n\nWRITING LOSS DATA\n\n")
+    write_loss_data(train_loss, "train_loss.csv")
+    write_loss_data(validation_loss, "validation_loss.csv")
+
+
+def write_loss_data(loss_dict, filename):
+    df = pd.DataFrame(loss_dict)
+    filepath = os.path.join(output_dir, filename)
+    df.to_csv(filepath)
 
 
 def get_config(config_fn):
@@ -278,16 +290,14 @@ if __name__ == "__main__":
     num_epochs = config["train"]["num_epochs"]
     loss_config = config["loss"]
 
-    train_loss, test_loss = run_training_loop(net,
-                                              optimizer,
-                                              scheduler,
-                                              train_dataloader,
-                                              validation_dataset,
-                                              template,
-                                              loss_config,
-                                              save_best_model,
-                                              num_epochs)
+    run_training_loop(net,
+                      optimizer,
+                      scheduler,
+                      train_dataloader,
+                      validation_dataset,
+                      template,
+                      loss_config,
+                      save_best_model,
+                      num_epochs)
 
-    output_data = np.array([train_loss, test_loss]).T
-    df_outfile = os.path.join(output_dir, "loss_history.csv")
-    np.savetxt(df_outfile, output_data, delimiter=",", header="train loss, test loss")
+    print("\n\nCOMPLETED TRAINING MODEL")
