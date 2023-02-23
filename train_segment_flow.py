@@ -16,12 +16,6 @@ import numpy as np
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
-def mean_divergence_loss(div_integral):
-    mean_divergence = [(-fd).exp().mean() for fd in div_integral]
-    mean_divergence = sum(mean_divergence) / len(mean_divergence)
-    return mean_divergence
-
-
 def evaluate_model(net, dataset, batched_template, loss_config):
     assert len(dataset) > 0.0
     avg_loss = 0.0
@@ -113,7 +107,7 @@ def step_training_epoch(
         batched_template.update_batched_vertices(deformed_verts, detach=False)
 
         cross_entropy_loss = cross_entropy_weight * cross_entropy_evaluator(segmentation, gt_segmentation)
-        divergence_loss = divergence_weight * mean_divergence_loss(div_integral)
+        divergence_loss = divergence_weight * average_divergence_loss(div_integral)
 
         chd, chn = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, norm_type)
         chd *= chamfer_distance_weight

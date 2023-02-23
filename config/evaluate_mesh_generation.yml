@@ -1,8 +1,8 @@
 info:
   input_size: [128, 128, 128]
 files:
-  model: output/flow/chn-5/best_model_dict.pth
-  out_dir: output/flow/chn-5/evaluation/ct
+  model: output/segment_flow/model-1/best_model_dict.pth
+  out_dir: output/segment_flow/model-1/evaluation/mr
   template: data/template/highres_template.vtp
-  root_dir: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartData/raw_validation/ct
-modality: ct
+  root_dir: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/raw_validation/mr
+modality: mr

@@ -99,3 +99,9 @@ def average_laplacian_smoothing_loss(mesh_list):
 def average_normal_consistency_loss(mesh_list):
     normal_consistency_loss = [mesh_normal_consistency(mesh) for mesh in mesh_list]
     return sum(normal_consistency_loss) / len(normal_consistency_loss)
+
+
+def average_divergence_loss(div_integral):
+    mean_divergence = [(-fd).exp().mean() for fd in div_integral]
+    mean_divergence = sum(mean_divergence) / len(mean_divergence)
+    return mean_divergence
