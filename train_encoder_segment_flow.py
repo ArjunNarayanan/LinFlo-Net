@@ -242,7 +242,7 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", **config["train"]["scheduler"])
 
     default_output_dir = os.path.dirname(config_fn)
-    output_dir = config["data"].get("output_dir", default_output_dir)
+    output_dir = config["data"].get("output_folder", default_output_dir)
     print("WRITING OUTPUT TO : ", output_dir, "\n\n")
 
     if not os.path.isdir(output_dir):

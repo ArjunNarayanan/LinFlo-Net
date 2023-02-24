@@ -2,8 +2,8 @@ import torch
 import sys
 import os
 sys.path.append(os.getcwd())
-from src.dataset import ImageSegmentationMeshDataset
-from src.unet_segment import UnetSegment
+from src.dataset import *
+from src.unet_segment import *
 from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
 import time
@@ -26,13 +26,13 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-config_fn = "config/train_model.yml"
+config_fn = "output/segmentation/res_unet/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
 
 net_config = config["model"]
-net = UnetSegment.from_dict(net_config)
+net = ResUnetSegment.from_dict(net_config)
 net.to(device)
 
 dice_loss_evaluator = SoftDiceLoss()
@@ -45,8 +45,7 @@ optimizer = torch.optim.Adam(net.parameters(), lr = 1e-3, weight_decay = 1e-4)
 
 data_fn = config["data"]["train_folder"]
 batch_size = config["train"]["batch_size"]
-dataset = ImageSegmentationMeshDataset(data_fn)
-dataloader = DataLoader(dataset, shuffle=True, batch_size=batch_size)
+dataloader = image_segmentation_mesh_dataloader(data_fn, shuffle=True, batch_size=batch_size)
 
 
 start = time.perf_counter()

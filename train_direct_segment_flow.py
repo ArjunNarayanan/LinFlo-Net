@@ -78,13 +78,15 @@ def loss2str(loss_components):
     if "cross_entropy" in loss_components:
         out_str += "MCE {:1.3e} | ".format(loss_components["cross_entropy"])
     if "dice" in loss_components:
-        out_str += "DIC {:1.3e}".format(loss_components["dice"])
+        out_str += "DIC {:1.3e} | ".format(loss_components["dice"])
     if "edge" in loss_components:
         out_str += "EDG {:1.3e} | ".format(loss_components["edge"])
     if "laplace" in loss_components:
         out_str += "LAP {:1.3e} | ".format(loss_components["laplace"])
     if "normal" in loss_components:
         out_str += "NOR {:1.3e} | ".format(loss_components["normal"])
+    
+    out_str += " TOT {:1.3e} | ".format(loss_components["total"])
 
     return out_str
 
@@ -128,7 +130,7 @@ def step_training_epoch(
         predictions = get_model_predictions(net, image, template)
 
         loss_components = compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config)
-        loss = sum(loss_components.values())
+        loss = loss_components["total"]
         loss.backward()
         optimizer.step()
 
@@ -206,7 +208,7 @@ def run_training_loop(net,
         write_loss_data(train_loss, "train_loss.csv")
         write_loss_data(validation_loss, "validation_loss.csv")
 
-    print("\n\nWRITING LOSS DATA\n\n")
+    print("WRITING LOSS DATA\n\n")
     write_loss_data(train_loss, "train_loss.csv")
     write_loss_data(validation_loss, "validation_loss.csv")
 
@@ -214,7 +216,7 @@ def run_training_loop(net,
 def write_loss_data(loss_dict, filename):
     df = pd.DataFrame(loss_dict)
     filepath = os.path.join(output_dir, filename)
-    df.to_csv(filepath)
+    df.to_csv(filepath, index=False)
 
 
 def get_config(config_fn):
@@ -233,7 +235,6 @@ def initialize_model(model_config):
     segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
 
     # since we add occupancy as a new channel, input channels increases by one
-    decoder_input_channels = decoder_input_channels + 1
     decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
     flow_clip_value = model_config["flow"]["clip"]
     flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
@@ -278,7 +279,7 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", **config["train"]["scheduler"])
 
     default_output_dir = os.path.dirname(config_fn)
-    output_dir = config["data"].get("output_dir", default_output_dir)
+    output_dir = config["data"].get("output_folder", default_output_dir)
     print("WRITING OUTPUT TO : ", output_dir, "\n\n")
 
     if not os.path.isdir(output_dir):

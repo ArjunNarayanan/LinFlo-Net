@@ -1,4 +1,4 @@
-from loss import *
+from src.loss import *
 
 
 def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config):
@@ -42,6 +42,9 @@ def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_con
     if loss_config.get("normal", 0) > 0:
         normal_loss = loss_config["normal"] * average_normal_consistency_loss(predictions["meshes"])
         loss_components["normal"] = normal_loss
+
+    total = sum(loss_components.values())
+    loss_components["total"] = total
 
     return loss_components
 

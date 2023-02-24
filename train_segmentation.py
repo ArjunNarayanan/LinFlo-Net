@@ -3,7 +3,7 @@ import torch.optim.lr_scheduler
 from src.unet_segment import *
 from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
-from src.dataset import ImageSegmentationMeshDataset, collate_fn
+from src.dataset import *
 from src.io_utils import SaveBestModel
 import math
 import yaml
@@ -154,8 +154,7 @@ if __name__ == "__main__":
     train_folder = config["data"]["train_folder"]
     batch_size = config["train"]["batch_size"]
 
-    train_dataset = ImageSegmentationMeshDataset(train_folder)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, collate_fn=collate_fn)
+    train_dataloader = image_segmentation_mesh_dataloader(train_folder, shuffle=True, batch_size=batch_size)
 
     validation_folder = config["data"]["validation_folder"]
     validation_dataset = ImageSegmentationMeshDataset(validation_folder)
@@ -171,7 +170,7 @@ if __name__ == "__main__":
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", **config["train"]["scheduler"])
 
     default_output_dir = os.path.dirname(config_fn)
-    output_dir = config["data"].get("output_dir", default_output_dir)
+    output_dir = config["data"].get("output_folder", default_output_dir)
     print("WRITING OUTPUT TO : ", output_dir, "\n\n")
 
     if not os.path.isdir(output_dir):
