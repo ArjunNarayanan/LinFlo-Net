@@ -1,6 +1,6 @@
 import os
 import torch.optim.lr_scheduler
-from src.unet_segment import UnetSegment
+from src.unet_segment import *
 from src.loss import SoftDiceLoss
 from torch.nn import CrossEntropyLoss
 from src.dataset import ImageSegmentationMeshDataset, collate_fn
@@ -161,7 +161,7 @@ if __name__ == "__main__":
     validation_dataset = ImageSegmentationMeshDataset(validation_folder)
 
     net_config = config["model"]
-    net = UnetSegment.from_dict(net_config)
+    net = ResUnetSegment.from_dict(net_config)
     net.to(device)
 
     optimizer_config = config["train"]["optimizer"]
