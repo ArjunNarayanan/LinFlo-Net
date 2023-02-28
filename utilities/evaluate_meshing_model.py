@@ -15,8 +15,7 @@ import argparse
 
 
 class Prediction:
-    def __init__(self, info, model, mesh_tmplt, out_dir, modality):
-        self.info = info
+    def __init__(self, model, mesh_tmplt, out_dir, modality):
         self.model = model
         self.mesh_tmplt = mesh_tmplt
         self.out_dir = out_dir
@@ -113,7 +112,6 @@ if __name__ == "__main__":
     with open(config_fn, "r") as config_file:
         config = yaml.safe_load(config_file)
 
-    info = config["info"]
     model_fn = config["files"]["model"]
     print("LOADING MODEL AT : ", model_fn, "\n\n")
 
@@ -139,7 +137,7 @@ if __name__ == "__main__":
     index = pd.read_csv(index_fn)
 
     modality = config["modality"]
-    prediction = Prediction(info, model, template, out_dir, modality)
+    prediction = Prediction(model, template, out_dir, modality)
 
     dice = compute_all_dice_scores(root_dir, index, prediction)
 

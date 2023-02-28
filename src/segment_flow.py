@@ -30,6 +30,20 @@ class ClipFlow:
         return flow
 
 
+class SoftClipFlow:
+    def __init__(self, clip_value):
+        assert clip_value > 0
+        self.clip_value = clip_value
+        self.activation = nn.Tanh()
+
+    def clip_flow_field(self, flow):
+        assert flow.ndim == 5
+        assert flow.shape[1] == 3
+
+        flow = self.clip_value * self.activation(flow)
+        return flow
+
+
 class Decoder(nn.Module):
     def __init__(self, input_channels, hidden_channels, output_channels):
         super().__init__()
@@ -57,7 +71,21 @@ class FlowDecoder(Decoder):
 
     def forward(self, x):
         flow = super().forward(x)
-        flow - self.clip_flow.clip_flow_field(flow)
+        flow = self.clip_flow.clip_flow_field(flow)
+        return flow
+
+
+class SoftClipFlowDecoder(Decoder):
+    def __init__(self, input_channels, hidden_channels, clip_value):
+        super().__init__(input_channels, hidden_channels, 3)
+        self.clip_flow = SoftClipFlow(clip_value)
+
+        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
+
+    def forward(self, x):
+        flow = super().forward(x)
+        flow = self.clip_flow.clip_flow_field(flow)
         return flow
 
 
