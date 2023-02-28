@@ -2,7 +2,7 @@ data:
     train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
     validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-3
+    output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-5
 train:
     num_epochs: 50
     batch_size: 1
@@ -25,7 +25,7 @@ model:
         uparm_channels: [256, 128, 64, 32, 32]
     flow:
         decoder_hidden_channels: 32
-        clip: 0.05
+        clip: 0.10
     segment:
         decoder_hidden_channels: 32
         output_channels: 8
