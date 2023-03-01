@@ -6,7 +6,7 @@ from src.utilities import batch_occupancy_map_from_vertices
 from src.integrator import IntegrateFlowDivRK4
 from src.flow_loss import *
 from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_dataloader
-from src.io_utils import SaveBestModel
+from src.io_utils import SaveBestModel, loss2str
 from src.template import Template, BatchTemplate
 import math
 import yaml
@@ -66,29 +66,6 @@ def evaluate_model(net, dataset, template, loss_evaluators, loss_config):
         running_validation_loss[k] /= num_data_points
 
     return running_validation_loss
-
-
-def loss2str(loss_components):
-    out_str = ""
-    if "chamfer_distance" in loss_components:
-        out_str += "CHD {:1.3e} | CHN {:1.3e} | ".format(loss_components["chamfer_distance"],
-                                                         loss_components["chamfer_normal"])
-    if "divergence" in loss_components:
-        out_str += "DIV {:1.3e} | ".format(loss_components["divergence"])
-    if "cross_entropy" in loss_components:
-        out_str += "MCE {:1.3e} | ".format(loss_components["cross_entropy"])
-    if "dice" in loss_components:
-        out_str += "DIC {:1.3e} | ".format(loss_components["dice"])
-    if "edge" in loss_components:
-        out_str += "EDG {:1.3e} | ".format(loss_components["edge"])
-    if "laplace" in loss_components:
-        out_str += "LAP {:1.3e} | ".format(loss_components["laplace"])
-    if "normal" in loss_components:
-        out_str += "NOR {:1.3e} | ".format(loss_components["normal"])
-    
-    out_str += " TOT {:1.3e} | ".format(loss_components["total"])
-
-    return out_str
 
 
 def step_training_epoch(
@@ -249,7 +226,7 @@ def initialize_model(model_config):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train Segmentation Flow")
+    parser = argparse.ArgumentParser(description="Train Direct Segmentation Flow")
     parser.add_argument("-config", help="path to config file")
     args = parser.parse_args()
 

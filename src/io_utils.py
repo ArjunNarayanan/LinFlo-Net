@@ -149,3 +149,26 @@ def pytorch3d_to_vtk(pytorch3d_mesh):
     faceids_name = pytorch3d_mesh.faceids_name
     mesh = create_vtk_mesh(np_points, np_faces, rids_array=np_rids, faceids=faceids, faceids_name=faceids_name)
     return mesh
+
+
+def loss2str(loss_components):
+    out_str = ""
+    if "chamfer_distance" in loss_components:
+        out_str += "CHD {:1.3e} | CHN {:1.3e} | ".format(loss_components["chamfer_distance"],
+                                                         loss_components["chamfer_normal"])
+    if "divergence" in loss_components:
+        out_str += "DIV {:1.3e} | ".format(loss_components["divergence"])
+    if "cross_entropy" in loss_components:
+        out_str += "MCE {:1.3e} | ".format(loss_components["cross_entropy"])
+    if "dice" in loss_components:
+        out_str += "DIC {:1.3e} | ".format(loss_components["dice"])
+    if "edge" in loss_components:
+        out_str += "EDG {:1.3e} | ".format(loss_components["edge"])
+    if "laplace" in loss_components:
+        out_str += "LAP {:1.3e} | ".format(loss_components["laplace"])
+    if "normal" in loss_components:
+        out_str += "NOR {:1.3e} | ".format(loss_components["normal"])
+
+    out_str += " TOT {:1.3e} | ".format(loss_components["total"])
+
+    return out_str
