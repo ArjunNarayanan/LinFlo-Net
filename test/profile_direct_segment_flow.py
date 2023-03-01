@@ -47,7 +47,7 @@ def initialize_model(model_config):
     # since we add occupancy as a new channel, input channels increases by one
     decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
     flow_clip_value = model_config["flow"]["clip"]
-    flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
+    flow_decoder = SoftClipFlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
 
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
     net = LinearTransformSegmentFlow(pretrained_linear_transform,
@@ -58,7 +58,7 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "output/segment_flow/direct-1/config.yml"
+config_fn = "config/segment_flow/direct-soft-clip-2/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 

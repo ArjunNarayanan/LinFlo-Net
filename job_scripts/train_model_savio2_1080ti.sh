@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=seg-flow-model-5
+#SBATCH --job-name=direct-soft-clip-2
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -29,5 +29,5 @@
 ## Command(s) to run (example):
 
 
-config_file=config/segment_flow/model-5/config.yml
-python train_encoder_segment_flow.py -config $config_file
+config_file=config/segment_flow/direct-soft-clip-2/config.yml
+python train_direct_soft_clip_segment_flow.py -config $config_file

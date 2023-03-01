@@ -1,3 +1,4 @@
+# NOTES: THIS MODEL USES SMALLER WEIGHT ON DIVERGENCE LOSS
 data:
     train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
     validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
@@ -35,7 +36,7 @@ loss:
     norm_type: 1
     chamfer_distance: 1
     chamfer_normal: 0.05
-    divergence: 0.01
+    divergence: 0.002
     edge: 50
     normal: 2
     laplace: 10
