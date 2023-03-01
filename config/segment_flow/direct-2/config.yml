@@ -1,9 +1,8 @@
-# THIS MODEL USES ADDITIONAL LAYER IN UNET, AND INCREASED WEIGHT ON CHAMFER DISTANCE LOSS
 data:
     train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
     validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/direct-soft-clip-2
+    output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/direct-2
 train:
     num_epochs: 50
     batch_size: 1

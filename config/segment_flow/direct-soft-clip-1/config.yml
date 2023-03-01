@@ -7,7 +7,7 @@ train:
     num_epochs: 50
     batch_size: 1
     optimizer:
-        lr: 1.e-5
+        lr: 5.e-5
         weight_decay: 5.e-5
     scheduler:
         factor: 0.9
@@ -20,8 +20,8 @@ model:
         input_shape: 128
         input_channels: 2
         first_layer_channels: 32
-        downarm_channels: [32, 32, 64, 128, 256]
-        uparm_channels: [256, 128, 64, 32, 32]
+        downarm_channels: [32, 32, 64, 128, 256, 256]
+        uparm_channels: [256, 256, 128, 64, 32, 32]
     flow:
         decoder_hidden_channels: 32
         clip: 0.05
@@ -34,9 +34,9 @@ loss:
     norm_type: 1
     chamfer_distance: 1
     chamfer_normal: 0.05
-    divergence: 0.01
+    divergence: 0.002
     cross_entropy: 0.2
-    dice: 5
-    edge: 50
-    normal: 0
+    dice: 1
+    edge: 20
+    normal: 0.5
     laplace: 0
