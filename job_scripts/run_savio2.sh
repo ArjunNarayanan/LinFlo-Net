@@ -1,12 +1,12 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=model-6
+#SBATCH --job-name=eval-model-5-mr
 #
 # Account:
 #SBATCH --account=fc_biome
 #
 # Partition:
-#SBATCH --partition=savio2_1080ti
+#SBATCH --partition=savio2
 #
 # QoS:
 #SBATCH --qos=savio_normal
@@ -18,16 +18,13 @@
 #SBATCH --ntasks-per-node=1
 #
 # Processors per task (please always specify the total number of processors twice the number of GPUs):
-#SBATCH --cpus-per-task=2
-#
-#Number of GPUs, this can be in the format of "gpu:[1-4]", or "gpu:K80:[1-4] with the type included
-#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=1
 #
 # Wall clock limit:
-#SBATCH --time=70:00:00
+#SBATCH --time=00:20:00
 #
 ## Command(s) to run (example):
 
 
-config_file=config/segment_flow/model-6/config.yml
-python train_encoder_segment_flow.py -config $config_file
+config_file=config/segment_flow/model-5/evaluate_mr.yml
+python utilities/evaluate_meshing_model.py -config $config_file

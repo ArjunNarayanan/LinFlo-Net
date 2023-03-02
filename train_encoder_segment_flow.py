@@ -110,7 +110,7 @@ def step_training_epoch(
 
         predictions = get_model_predictions(net, image, template)
 
-        loss_components = compute_loss_components(predictions, ground_truth, loss)
+        loss_components = compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config)
         loss = loss_components["total"]
         loss.backward()
         optimizer.step()

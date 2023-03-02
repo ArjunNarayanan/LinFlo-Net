@@ -4,3 +4,4 @@ __pycache__/
 *.out
 output/*
 *.DS_Store
+config/*
