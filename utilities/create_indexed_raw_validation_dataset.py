@@ -7,20 +7,17 @@ import shutil
 def write_output_files(root_dir, filename, out_filename, out_dir):
     print("Processing file : ", filename)
 
-    im_fn = os.path.join(root_dir, "vtk_image", filename + ".vti")
-    seg_fn = os.path.join(root_dir, "vtk_segmentation", filename + ".vti")
-    mesh_fn = os.path.join(root_dir, "vtk_mesh", filename + ".vtp")
-    data_fn = os.path.join(root_dir, "data", filename + ".pkl")
+    im_fn = os.path.join(root_dir, "image", filename + ".nii.gz")
+    seg_fn = os.path.join(root_dir, "label", filename + ".nii.gz")
+    mesh_fn = os.path.join(root_dir, "meshes", filename + ".vtp")
 
-    out_im_fn = os.path.join(out_dir, "vtk_image", out_filename + ".vti")
-    out_seg_fn = os.path.join(out_dir, "vtk_segmentation", out_filename + ".vti")
-    out_mesh_fn = os.path.join(out_dir, "vtk_mesh", out_filename + ".vtp")
-    out_data_fn = os.path.join(out_dir, "data", out_filename + ".pkl")
+    out_im_fn = os.path.join(out_dir, "image", out_filename + ".nii.gz")
+    out_seg_fn = os.path.join(out_dir, "label", out_filename + ".nii.gz")
+    out_mesh_fn = os.path.join(out_dir, "meshes", out_filename + ".vtp")
 
     shutil.copy(im_fn, out_im_fn)
     shutil.copy(seg_fn, out_seg_fn)
     shutil.copy(mesh_fn, out_mesh_fn)
-    shutil.copy(data_fn, out_data_fn)
 
 
 def write_all_output_files(root_dir, out_dir):
@@ -55,14 +52,12 @@ if __name__ == "__main__":
     input_folder = args.f
     output_folder = args.o
 
-    out_im_folder = os.path.join(output_folder, "vtk_image")
-    out_seg_folder = os.path.join(output_folder, "vtk_segmentation")
-    out_mesh_folder = os.path.join(output_folder, "vtk_mesh")
-    out_data_folder = os.path.join(output_folder, "data")
+    out_im_folder = os.path.join(output_folder, "image")
+    out_seg_folder = os.path.join(output_folder, "label")
+    out_mesh_folder = os.path.join(output_folder, "meshes")
 
     make_dir(out_im_folder)
     make_dir(out_seg_folder)
     make_dir(out_mesh_folder)
-    make_dir(out_data_folder)
 
     write_all_output_files(input_folder, output_folder)
