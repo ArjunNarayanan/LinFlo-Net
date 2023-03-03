@@ -1,15 +1,12 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=Train-direct-LT
+#SBATCH --job-name=train-model-7
 #
 # Account:
 #SBATCH --account=fc_biome
 #
 # Partition:
 #SBATCH --partition=savio3_gpu
-#
-# QoS:
-#SBATCH --qos=savio_lowprio
 #
 # Number of nodes:
 #SBATCH --nodes=1
@@ -24,10 +21,10 @@
 #SBATCH --gres=gpu:GTX2080TI:1
 #
 # Wall clock limit:
-#SBATCH --time=24:00:00
+#SBATCH --time=70:00:00
 #
 ## Command(s) to run (example):
 
 
-config_file=output/linear_transform/direct_linear_transform/config.yml
-python train_direct_linear_transform.py -config $config_file
+config_file=config/segment_flow/model-7/config.yml
+python train_encoder_segment_flow.py -config $config_file

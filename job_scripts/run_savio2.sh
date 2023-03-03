@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=eval-model-5-mr
+#SBATCH --job-name=eval-model-6-ct
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -26,5 +26,5 @@
 ## Command(s) to run (example):
 
 
-config_file=config/segment_flow/model-5/evaluate_mr.yml
+config_file=config/segment_flow/model-6/evaluate_ct.yml
 python utilities/evaluate_meshing_model.py -config $config_file

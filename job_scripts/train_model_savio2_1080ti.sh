@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=model-6
+#SBATCH --job-name=model-7
 #
 # Account:
 #SBATCH --account=fc_biome
@@ -29,5 +29,5 @@
 ## Command(s) to run (example):
 
 
-config_file=config/segment_flow/model-6/config.yml
+config_file=config/segment_flow/model-7/config.yml
 python train_encoder_segment_flow.py -config $config_file
