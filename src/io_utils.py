@@ -29,13 +29,30 @@ class SaveBestModel:
             torch.save(data, self.output_fn)
 
 
-def read_image(img_fn):
-    img = vtu.load_vtk_image(img_fn)
+def vtk_image_to_torch(img):
     x, y, z = img.GetDimensions()
     py_img = vtu.vtk_to_numpy(img.GetPointData().GetScalars()).reshape(z, y, x).transpose(2, 1, 0).astype(np.float32)
-    img = torch.tensor(py_img)
+    torch_img = torch.tensor(py_img)
+    return torch_img
 
-    return img
+
+def read_image(img_fn):
+    img = vtu.load_vtk_image(img_fn)
+    torch_img = vtk_image_to_torch(img)
+    return torch_img
+
+
+def torch_to_vtk_image(torch_img, ref_img):
+    py_img = torch_img.detach().numpy()
+    out_img = py_img.transpose(2, 1, 0).reshape(-1)
+    ref_img.GetPointData().SetScalars(vtu.numpy_to_vtk(out_img))
+    return ref_img
+
+
+def write_image(py_img, ref_img, outfile):
+    out_img = py_img.transpose(2, 1, 0).reshape(-1)
+    ref_img.GetPointData().SetScalars(vtu.numpy_to_vtk(out_img))
+    vtu.write_vtk_image(ref_img, outfile)
 
 
 def read_mesh_list(mesh_fn):

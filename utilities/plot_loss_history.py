@@ -19,7 +19,7 @@ def plot_loss(train_loss, validation_loss, loss_name, filename=None):
 
 
 def plot_all_losses(train_df, validation_df, output_dir):
-    for loss_name in df.keys():
+    for loss_name in train_df.keys():
         assert loss_name in validation_df
 
         train_loss = train_df[loss_name]
@@ -28,7 +28,7 @@ def plot_all_losses(train_df, validation_df, output_dir):
         plot_loss(train_loss, validation_loss, loss_name, outfile)
 
 
-root_dir = "output/segment_flow/direct-soft-clip-1/"
+root_dir = "output/segment_flow/model-6/"
 
 output_dir = os.path.join(root_dir, "loss_plots")
 if not os.path.isdir(output_dir):

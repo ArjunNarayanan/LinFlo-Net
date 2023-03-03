@@ -139,6 +139,15 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         encoding = torch.cat([encoding, occupancy], dim=1)
         return encoding
 
+    def get_segmentation(self, image):
+        assert image.ndim == 5
+
+        pre_encoding = self.get_encoder_input(image)
+        encoding = self.encoder(pre_encoding)
+        segmentation = self.segment_decoder(encoding)
+
+        return segmentation
+
     def forward(self, image, vertices):
         assert image.ndim == 5
         batch_size = image.shape[0]
