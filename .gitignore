@@ -5,3 +5,5 @@ __pycache__/
 output/*
 *.DS_Store
 config/*
+bash_scripts/*
+job_scripts/*
