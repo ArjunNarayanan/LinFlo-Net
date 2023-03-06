@@ -3,6 +3,7 @@ from torch.nn import CrossEntropyLoss
 from src.flow_loss import *
 from src.io_utils import loss2str
 import math
+from src.template import BatchTemplate
 from collections import defaultdict
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
@@ -69,8 +70,13 @@ def step_training_epoch(
         gt_meshes = [m.to(device) for m in data["meshes"]]
         gt_segmentation = data["segmentation"].to(device)
         ground_truth = {"meshes": gt_meshes, "segmentation": gt_segmentation}
+        batch_size = image.shape[0]
 
-        predictions = net.predict(net, image, template)
+        batched_template = BatchTemplate.from_single_template(template, batch_size)
+        batched_verts = batched_template.batch_vertex_coordinates()
+        predictions = net.predict(net, image, batched_verts)
+        batched_template.update_batched_vertices(predictions["deformed_vertices"], detach=False)
+        predictions["meshes"] = batched_template.meshes_list
 
         loss_components = compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config)
         loss = loss_components["total"]
@@ -154,3 +160,6 @@ def run_training_loop(net,
         checkpointer.save_loss(validation_loss, "validation_loss.csv")
 
     return train_loss, validation_loss
+
+
+

@@ -1,0 +1,32 @@
+data:
+    train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
+    validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
+    template_filename: data/template/highres_template.vtp
+    output_dir: output/train_model
+train:
+    num_epochs: 50
+    batch_size: 1
+    optimizer:
+        lr: 1.e-3
+        weight_decay: 1.e-5
+    scheduler:
+        factor: 0.9
+        patience: 5
+        threshold: 1.e-4
+        min_lr: 1.e-6
+model:
+    input_size: 128
+    input_channels: 1
+    unet_first_channels: 16
+    downarm_channels: [64, 128, 256, 256]
+    uparm_channels: [256, 256, 128, 64]
+    num_classes: 8
+    clip_flow: 0.01
+integrator:
+    num_steps: 100
+loss:
+    norm_type: 1
+    cross_entropy: 1.0
+    dice: 1.0
+    chamfer_distance: 1.0
+    chamfer_normal: 1.0

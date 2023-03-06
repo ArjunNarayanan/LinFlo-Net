@@ -16,7 +16,7 @@ def get_all_maximum_flow_magnitudes(model, dataset, template_verts):
         image = data["image"].unsqueeze(0)
         lt_deformed_vertices = model.pretrained_linear_transform(image, template_verts)
         occupancy = occupancy_map(lt_deformed_vertices, 128).unsqueeze(0)
-        encoder_input = model.get_encoder_input(image, occupancy)
+        encoder_input = model.get_pre_encoding(image, occupancy)
 
         with torch.no_grad():
             encoding = model.encoder(encoder_input)

@@ -26,7 +26,7 @@ def get_model_predictions(net, image, template):
 
     lt_deformed_vertices = net.pretrained_linear_transform(image, batched_verts)
     occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, INPUT_SHAPE)
-    encoder_input = net.get_encoder_input(image, occupancy)
+    encoder_input = net.get_pre_encoding(image, occupancy)
 
     encoding = net.encoder(encoder_input)
     predicted_segmentation = net.segment_decoder(encoding)

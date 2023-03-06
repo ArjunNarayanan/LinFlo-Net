@@ -1,0 +1,44 @@
+# NOTES: based on model-3
+# changes: increase u-net depth, reduce chn weight, increase chd weight
+data:
+    train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
+    validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
+    template_filename: data/template/highres_template.vtp
+    output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-4
+train:
+    num_epochs: 50
+    batch_size: 1
+    optimizer:
+        lr: 5.e-5
+        weight_decay: 5.e-5
+    scheduler:
+        factor: 0.9
+        patience: 5
+        threshold: 1.e-4
+        min_lr: 1.e-6
+model:
+    pretrained_encoder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/pretrained_encoder.pth
+    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/pretrained_linear_transform.pth
+    encoder:
+        input_shape: 128
+        input_channels: 65
+        first_layer_channels: 32
+        downarm_channels: [32, 32, 64, 128, 256, 256]
+        uparm_channels: [256, 256, 128, 64, 32, 32]
+    flow:
+        decoder_hidden_channels: 32
+        clip: 0.05
+    segment:
+        decoder_hidden_channels: 32
+        output_channels: 8
+    integrator:
+        num_steps: 50
+loss:
+    norm_type: 1
+    chamfer_distance: 2
+    chamfer_normal: 0.02
+    divergence: 0.001
+    edge: 50
+    normal: 1
+    laplace: 1
+    cross_entropy: 0.2
