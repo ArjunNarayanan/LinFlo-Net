@@ -1,14 +1,19 @@
 import torch
 import numpy as np
 import SimpleITK as sitk
-import src.pre_process as pre
 import os
-import vtk_utils.vtk_utils as vtu
-from src.template import Template
+import sys
 import pandas as pd
 import yaml
 import argparse
 
+sys.path.append(os.getcwd())
+import src.pre_process as pre
+import vtk_utils.vtk_utils as vtu
+from src.template import Template
+
+
+device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 class Prediction:
     def __init__(self, info, model, mesh_tmplt, out_dir, modality):
@@ -52,13 +57,13 @@ class Prediction:
         return torch_img
 
     def predict_mesh(self):
-        template_coords = self.mesh_tmplt.verts_packed().unsqueeze(0)
-        torch_img = self.get_torch_image()
+        template_coords = self.mesh_tmplt.verts_packed().unsqueeze(0).to(device)
+        torch_img = self.get_torch_image().to(device)
 
         with torch.no_grad():
             deformed_coords = self.model(torch_img, template_coords)
 
-        deformed_coords = deformed_coords.squeeze(0).numpy()
+        deformed_coords = deformed_coords.squeeze(0).detach().cpu().numpy()
         deformed_coords = self.scale_to_image_coordinates(deformed_coords)
 
         dc = torch.tensor(deformed_coords, dtype=torch.float32)
@@ -108,8 +113,7 @@ if __name__ == "__main__":
     info = config["info"]
     model_fn = config["files"]["model"]
     model = torch.load(model_fn, map_location=torch.device("cpu"))["model"]
-
-    model.eval()
+    model.to(device)
 
     template_fn = config["files"]["template"]
     faceids_name = config["files"].get("faceids_name", None)
