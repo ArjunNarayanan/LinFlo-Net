@@ -158,11 +158,11 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         assert image.ndim == 5
         batch_size = image.shape[0]
 
-        pre_encoding = self.get_encoder_input(image)
-        lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, vertices)
+        with torch.no_grad():
+            pre_encoding = self.get_encoder_input(image)
+            lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, vertices)
 
         encoding = self.encoder(pre_encoding)
-
         input_shape = image.shape[-1]
         encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, input_shape)
         flow = self.flow_decoder(encoding)
@@ -175,8 +175,9 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         batch_size = image.shape[0]
 
-        pre_encoding = self.get_encoder_input(image)
-        lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
+        with torch.no_grad():
+            pre_encoding = self.get_encoder_input(image)
+            lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
 
         encoding = self.encoder(pre_encoding)
         predicted_segmentation = self.segment_decoder(encoding)
@@ -222,9 +223,10 @@ class LinearTransformSegmentFlow(nn.Module):
         assert image.ndim == 5
         batch_size = image.shape[0]
 
-        lt_deformed_vertices = self.pretrained_linear_transform(image, vertices)
-        input_shape = image.shape[-1]
-        occupancy = get_occupancy(lt_deformed_vertices, batch_size, input_shape)
+        with torch.no_grad():
+            lt_deformed_vertices = self.pretrained_linear_transform(image, vertices)
+
+        occupancy = get_occupancy(lt_deformed_vertices, batch_size, self.input_size)
         encoder_input = self.get_encoder_input(image, occupancy)
 
         encoding = self.encoder(encoder_input)
@@ -238,7 +240,9 @@ class LinearTransformSegmentFlow(nn.Module):
         flow_div = FlowDiv(self.input_size)
         batch_size = image.shape[0]
 
-        lt_deformed_vertices = self.pretrained_linear_transform(image, batched_verts)
+        with torch.no_grad():
+            lt_deformed_vertices = self.pretrained_linear_transform(image, batched_verts)
+
         occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, self.input_size)
         encoder_input = self.get_encoder_input(image, occupancy)
 
@@ -275,7 +279,6 @@ class UnifiedSegmentFlow(nn.Module):
         self.integrator = integrator
         self.clip_flow = ClipFlow(clip_flow)
 
-
         for param in self.pretrained_encoder.parameters():
             param.requires_grad = False
 
@@ -283,9 +286,7 @@ class UnifiedSegmentFlow(nn.Module):
             param.requires_grad = False
 
     def get_pre_encoding(self, image):
-        with torch.no_grad():
-            pre_encoding = self.pretrained_encoder(image)
-
+        pre_encoding = self.pretrained_encoder(image)
         pre_encoding = torch.cat([image, pre_encoding], dim=1)
 
         return pre_encoding
@@ -316,8 +317,9 @@ class UnifiedSegmentFlow(nn.Module):
     def forward(self, image, vertices):
         assert image.ndim == 5
 
-        pre_encoding = self.get_pre_encoding(image)
-        lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, vertices)
+        with torch.no_grad():
+            pre_encoding = self.get_pre_encoding(image)
+            lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, vertices)
 
         encoding = self.get_encoding(pre_encoding, lt_deformed_vertices)
         decoding = self.unified_decoder(encoding)
@@ -331,8 +333,9 @@ class UnifiedSegmentFlow(nn.Module):
         assert image.ndim == 5
         flow_div = FlowDiv(self.input_size)
 
-        pre_encoding = self.get_encoder_input(image)
-        lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
+        with torch.no_grad():
+            pre_encoding = self.get_encoder_input(image)
+            lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
 
         encoding = self.get_encoding(pre_encoding, lt_deformed_vertices)
         decoding = self.unified_decoder(encoding)
