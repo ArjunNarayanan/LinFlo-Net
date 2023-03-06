@@ -1,6 +1,7 @@
 from src.unet import *
 import src.finite_difference as fd
 from src.utilities import batch_occupancy_map_from_vertices, occupancy_map
+from src.template import BatchTemplate
 
 
 class FlowDiv:
@@ -16,17 +17,18 @@ class FlowDiv:
 
 class ClipFlow:
     def __init__(self, clip_value):
-        assert clip_value > 0
         self.clip_value = clip_value
 
     def clip_flow_field(self, flow):
-        assert flow.ndim == 5
-        assert flow.shape[1] == 3
-
         clip_flow = self.clip_value
-        norm = torch.norm(flow, dim=1, keepdim=True)
-        norm = torch.clamp(norm, min=clip_flow)
-        flow = clip_flow * (flow / norm)
+        if clip_flow > 0.0:
+            assert flow.ndim == 5
+            assert flow.shape[1] == 3
+
+            norm = torch.norm(flow, dim=1, keepdim=True)
+            norm = torch.clamp(norm, min=clip_flow)
+            flow = clip_flow * (flow / norm)
+
         return flow
 
 
@@ -103,6 +105,7 @@ def get_occupancy(vertices, batch_size, input_shape):
 
 class EncodeLinearTransformSegmentFlow(nn.Module):
     def __init__(self,
+                 input_size,
                  pretrained_encoder,
                  pretrained_linear_transform,
                  encoder,
@@ -111,6 +114,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
                  integrator):
         super().__init__()
 
+        self.input_size = input_size
         self.pretrained_encoder = pretrained_encoder
         self.pretrained_linear_transform = pretrained_linear_transform
         self.encoder = encoder
@@ -164,9 +168,37 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         return deformed_vertices
 
+    def predict(self, image, template):
+        flow_div = FlowDiv(self.input_size)
+
+        batch_size = image.shape[0]
+
+        batched_template = BatchTemplate.from_single_template(template, batch_size)
+        batched_verts = batched_template.batch_vertex_coordinates()
+
+        pre_encoding = self.get_encoder_input(image)
+        lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
+
+        encoding = self.encoder(pre_encoding)
+        predicted_segmentation = self.segment_decoder(encoding)
+
+        encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, INPUT_SHAPE)
+        flow_field = self.flow_decoder(encoding)
+        flow_and_div = flow_div.get_flow_div(flow_field)
+
+        deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
+        batched_template.update_batched_vertices(deformed_verts, detach=False)
+
+        predictions = {"meshes": batched_template.meshes_list,
+                       "segmentation": predicted_segmentation,
+                       "divergence_integral": div_integral}
+
+        return predictions
+
 
 class LinearTransformSegmentFlow(nn.Module):
     def __init__(self,
+                 input_size,
                  pretrained_linear_transform,
                  encoder,
                  segment_decoder,
@@ -174,6 +206,7 @@ class LinearTransformSegmentFlow(nn.Module):
                  integrator):
         super().__init__()
 
+        self.input_size = input_size
         self.pretrained_linear_transform = pretrained_linear_transform
         self.encoder = encoder
         self.segment_decoder = segment_decoder
@@ -203,3 +236,28 @@ class LinearTransformSegmentFlow(nn.Module):
         deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)
 
         return deformed_vertices
+
+    def predict(self, image, template):
+        flow_div = FlowDiv(self.input_size)
+        batch_size = image.shape[0]
+
+        batched_template = BatchTemplate.from_single_template(template, batch_size)
+        batched_verts = batched_template.batch_vertex_coordinates()
+
+        lt_deformed_vertices = self.pretrained_linear_transform(image, batched_verts)
+        occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, self.input_size)
+        encoder_input = self.get_encoder_input(image, occupancy)
+
+        encoding = self.encoder(encoder_input)
+        predicted_segmentation = self.segment_decoder(encoding)
+        flow_field = self.flow_decoder(encoding)
+
+        flow_and_div = flow_div.get_flow_div(flow_field)
+        deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
+        batched_template.update_batched_vertices(deformed_verts, detach=False)
+
+        predictions = {"meshes": batched_template.meshes_list,
+                       "segmentation": predicted_segmentation,
+                       "divergence_integral": div_integral}
+
+        return predictions

@@ -1,8 +1,10 @@
 import os
 import sys
+import pandas as pd
 import torch
 import numpy as np
 import vtk
+import yaml
 from pytorch3d.structures import Meshes
 
 sys.path.append(os.getcwd())
@@ -10,23 +12,28 @@ import vtk_utils.vtk_utils as vtu
 
 
 class SaveBestModel:
-    """
-    Class to save the best model while training. If the current epoch's
-    validation loss is less than the previous least less, then save the
-    model state.
-    """
+    def __init__(self, root_dir, best_valid_loss=float("inf")):
+        self.root_dir = root_dir
+        self.best_validation_loss = best_valid_loss
+        self.best_model_file = os.path.join(self.root_dir, "best_model.pth")
+        self.checkpoint_file = os.path.join(self.root_dir, "model-0.pth")
 
-    def __init__(self, output_fn, best_valid_loss=float('inf')):
-        self.best_valid_loss = best_valid_loss
-        self.output_fn = output_fn
+    def save_best_model(self, current_validation_loss, epoch, data):
+        if current_validation_loss < self.best_validation_loss:
+            self.best_validation_loss = current_validation_loss
+            print(f"\nBest validation loss: {self.best_validation_loss}")
+            print(f"\nSaving best model for epoch: {epoch}\n")
+            torch.save(data, self.best_model_file)
 
-    def __call__(self, current_valid_loss, epoch, data):
-        if current_valid_loss < self.best_valid_loss:
-            self.best_valid_loss = current_valid_loss
-            print(f"\nBest validation loss: {self.best_valid_loss}")
-            print(f"\nSaving best model for epoch: {epoch + 1}\n")
-            data["epoch"] = epoch + 1
-            torch.save(data, self.output_fn)
+    def save_checkpoint(self, epoch, data):
+        print(f"\nSaving checkpoint at epoch {epoch}")
+        self.checkpoint_file = os.path.join(self.root_dir, "model-" + str(epoch) + ".pth")
+        torch.save(data, self.checkpoint_file)
+
+    def save_loss(self, loss_dict, filename):
+        output_file = os.path.join(self.root_dir, filename)
+        df = pd.DataFrame(loss_dict)
+        df.to_csv(output_file, filename)
 
 
 def vtk_image_to_torch(img):
@@ -189,3 +196,9 @@ def loss2str(loss_components):
     out_str += " TOT {:1.3e} | ".format(loss_components["total"])
 
     return out_str
+
+
+def load_yaml_config(config_fn):
+    with open(config_fn, "r") as config_file:
+        config = yaml.safe_load(config_file)
+    return config
