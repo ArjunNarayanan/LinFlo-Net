@@ -24,6 +24,9 @@ class UnetSegment(nn.Module):
         x = self.decoder(x)
         return x
 
+    def get_segmentation(self, x):
+        return self.forward(x)
+
 
 class ResUnetSegment(nn.Module):
     def __init__(self, input_size, input_channels, unet_first_channels, downarm_channels, uparm_channels,

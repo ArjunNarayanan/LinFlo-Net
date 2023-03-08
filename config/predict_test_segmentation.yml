@@ -1,0 +1,5 @@
+input_dir: /global/scratch/users/arjunnarayanan/MMWHS_test/ct
+output_dir: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-3/test/segmentation/ct
+model: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-3/best_model_dict.pth
+modality: ct
+normalized_image_size: 128
