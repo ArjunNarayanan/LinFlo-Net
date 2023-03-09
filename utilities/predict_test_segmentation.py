@@ -69,12 +69,14 @@ def write_all_segmentations(root_dir, index, model, output_dir, modality, normal
     for filename in index["file_name"]:
         image_fn = os.path.join(root_dir, "image", filename + ".nii.gz")
         assert os.path.isfile(image_fn)
+        print("Processing file : ", image_fn)
 
         processed_image = ProcessedImage(image_fn, modality, normalized_image_size)
         torch_seg = predict_segmentation(model, processed_image.model_input)
         np_seg = torch_seg.cpu().numpy()
         np_seg = np_seg.astype("int16")
-        sitk_img = numpy_to_itk(np_seg, processed_image.original_image)
+        sitk_img = numpy_to_itk(np_seg, processed_image.normalized_image)
+        sitk_img = transform_segmentation_to_image_space(sitk_img, processed_image.original_image)
 
         output_filename = os.path.join(output_dir, filename + ".nii.gz")
         sitk.WriteImage(sitk_img, output_filename)

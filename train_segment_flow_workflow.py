@@ -118,6 +118,9 @@ def step_training_epoch(
             for (k, v) in validation_loss_components.items():
                 running_validation_loss[k] += v
 
+    save_data = {"model": net, "optimizer": optimizer}
+    checkpointer.save_checkpoint(epoch, save_data)
+
     num_data_points = len(dataloader)
 
     for (k, v) in running_training_loss.items():

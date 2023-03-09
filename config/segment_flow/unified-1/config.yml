@@ -1,5 +1,5 @@
 # NOTES: Based on model-3
-# differences: extra layer in u-net. Unified decoder architecture. Higher weight on divergence loss
+# differences: extra layer in u-net. Unified decoder architecture. Remove divergence loss.
 data:
     train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
     validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
@@ -35,7 +35,7 @@ loss:
     norm_type: 1
     chamfer_distance: 1
     chamfer_normal: 0.5
-    divergence: 0.05
+    divergence: 0
     edge: 50
     normal: 5
     laplace: 10

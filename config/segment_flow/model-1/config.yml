@@ -1,7 +1,7 @@
 # NOTES: BASED ON MODEL-3
-# Changes: Increase weight decay, divergence, normal
+# Changes: Increase weight decay, remove divergence, use entire train and validation dataset for training
 data:
-    train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
+    train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train_and_validation
     validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
     template_filename: data/template/highres_template.vtp
     output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-1
@@ -37,7 +37,7 @@ loss:
     norm_type: 1
     chamfer_distance: 1
     chamfer_normal: 0.1
-    divergence: 0.01
+    divergence: 0
     edge: 50
     normal: 5
     laplace: 10
