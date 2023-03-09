@@ -4,6 +4,7 @@ from src.flow_loss import *
 from src.io_utils import loss2str
 import math
 from src.template import BatchTemplate
+from src.random_linear_perturbations import get_random_linear_transformer
 from collections import defaultdict
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
@@ -63,6 +64,10 @@ def step_training_epoch(
     running_training_loss = defaultdict(float)
     running_validation_loss = defaultdict(float)
 
+    scale_perturb = 0.1
+    translate_perturb = 0.1
+    rotate_perturb = 0.1
+
     for (idx, data) in enumerate(dataloader):
         optimizer.zero_grad(set_to_none=True)
 
@@ -74,7 +79,10 @@ def step_training_epoch(
 
         batched_template = BatchTemplate.from_single_template(template, batch_size)
         batched_verts = batched_template.batch_vertex_coordinates()
-        predictions = net.predict(net, image, batched_verts)
+
+        perturbations = get_random_linear_transformer(batch_size, scale_perturb, translate_perturb, rotate_perturb)
+
+        predictions = net.predict(image, batched_verts, perturbations)
         batched_template.update_batched_vertices(predictions["deformed_vertices"], detach=False)
         predictions["meshes"] = batched_template.meshes_list
 
@@ -160,6 +168,3 @@ def run_training_loop(net,
         checkpointer.save_loss(validation_loss, "validation_loss.csv")
 
     return train_loss, validation_loss
-
-
-

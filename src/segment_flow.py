@@ -170,7 +170,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         return deformed_vertices
 
-    def predict(self, image, batched_verts):
+    def predict(self, image, batched_verts, perturbations=None):
         flow_div = FlowDiv(self.input_size)
 
         batch_size = image.shape[0]
@@ -181,6 +181,9 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         encoding = self.encoder(pre_encoding)
         predicted_segmentation = self.segment_decoder(encoding)
+
+        if perturbations is not None:
+            lt_deformed_vertices = [perturbations.transform(v) for v in lt_deformed_vertices]
 
         encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, self.input_size)
         flow_field = self.flow_decoder(encoding)
