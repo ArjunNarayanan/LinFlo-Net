@@ -1,0 +1,6 @@
+files:
+  model: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-3/best_model_dict.pth
+  out_dir: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-3/evaluation/mr
+  template: data/template/highres_template.vtp
+  root_dir: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/indexed_raw_validation/mr
+modality: mr
