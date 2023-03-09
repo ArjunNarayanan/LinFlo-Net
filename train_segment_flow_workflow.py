@@ -19,9 +19,14 @@ def evaluate_model(net, dataset, template, loss_evaluators, loss_config):
         gt_meshes = [m.to(device) for m in data["meshes"]]
         gt_segmentation = data["segmentation"].unsqueeze(0).to(device)
         ground_truth = {"meshes": gt_meshes, "segmentation": gt_segmentation}
+        batch_size = image.shape[0]
 
+        batched_template = BatchTemplate.from_single_template(template, batch_size)
+        batched_verts = batched_template.batch_vertex_coordinates()
         with torch.no_grad():
-            predictions = net.predict(image, template)
+            predictions = net.predict(image, batched_verts)
+        batched_template.update_batched_vertices(predictions["deformed_vertices"], detach=False)
+        predictions["meshes"] = batched_template.meshes_list
 
         loss_components = compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config)
 

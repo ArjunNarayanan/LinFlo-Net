@@ -17,8 +17,8 @@ class FlowDiv:
 
 class ClipFlow:
     def __init__(self, clip_value):
-        if clip_value < 0:
-            print("WARNING: CLIP VALUE < 0, FLOW WILL NOT BE CLIPPED")
+        if clip_value <= 0.0:
+            print("WARNING: CLIP VALUE <= 0, FLOW WILL NOT BE CLIPPED")
         self.clip_value = clip_value
 
     def clip_flow_field(self, flow):
@@ -36,15 +36,17 @@ class ClipFlow:
 
 class SoftClipFlow:
     def __init__(self, clip_value):
-        assert clip_value > 0
+        if clip_value <= 0.0:
+            print("WARNING: CLIP VALUE <= 0.0, FLOW WILL NOT BE CLIPPED")
         self.clip_value = clip_value
         self.activation = nn.Tanh()
 
     def clip_flow_field(self, flow):
-        assert flow.ndim == 5
-        assert flow.shape[1] == 3
+        if self.clip_flow > 0.0:
+            assert flow.ndim == 5
+            assert flow.shape[1] == 3
+            flow = self.clip_value * self.activation(flow)
 
-        flow = self.clip_value * self.activation(flow)
         return flow
 
 
@@ -77,6 +79,26 @@ class FlowDecoder(Decoder):
         flow = super().forward(x)
         flow = self.clip_flow.clip_flow_field(flow)
         return flow
+
+
+class UnifiedDecoder(nn.Module):
+    def __init__(self, input_channels, hidden_channels, output_channels):
+        super().__init__()
+
+        self.input_channels = input_channels
+        self.hidden_channels = hidden_channels
+        self.output_channels = output_channels
+
+        self.conv = ConvINormConv(input_channels, hidden_channels)
+        self.decoder = nn.Conv3d(hidden_channels, output_channels, kernel_size=1)
+
+        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.decoder(x)
+        return x
 
 
 class SoftClipFlowDecoder(Decoder):
@@ -123,6 +145,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         self.segment_decoder = segment_decoder
         self.flow_decoder = flow_decoder
         self.integrator = integrator
+        self.flow_div = FlowDiv(self.input_size)
 
         for param in self.pretrained_encoder.parameters():
             param.requires_grad = False
@@ -171,10 +194,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         return deformed_vertices
 
     def predict(self, image, batched_verts, perturbations=None):
-        flow_div = FlowDiv(self.input_size)
-
         batch_size = image.shape[0]
-
         with torch.no_grad():
             pre_encoding = self.get_encoder_input(image)
             lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
@@ -187,7 +207,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, self.input_size)
         flow_field = self.flow_decoder(encoding)
-        flow_and_div = flow_div.get_flow_div(flow_field)
+        flow_and_div = self.flow_div.get_flow_div(flow_field)
 
         deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
 
@@ -214,6 +234,7 @@ class LinearTransformSegmentFlow(nn.Module):
         self.segment_decoder = segment_decoder
         self.flow_decoder = flow_decoder
         self.integrator = integrator
+        self.flow_div = FlowDiv(self.input_size)
 
         for param in self.pretrained_linear_transform.parameters():
             param.requires_grad = False
@@ -240,7 +261,6 @@ class LinearTransformSegmentFlow(nn.Module):
         return deformed_vertices
 
     def predict(self, image, batched_verts):
-        flow_div = FlowDiv(self.input_size)
         batch_size = image.shape[0]
 
         with torch.no_grad():
@@ -253,7 +273,7 @@ class LinearTransformSegmentFlow(nn.Module):
         predicted_segmentation = self.segment_decoder(encoding)
         flow_field = self.flow_decoder(encoding)
 
-        flow_and_div = flow_div.get_flow_div(flow_field)
+        flow_and_div = self.flow_div.get_flow_div(flow_field)
         deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
 
         predictions = {"deformed_vertices": deformed_verts,
@@ -280,6 +300,7 @@ class UnifiedSegmentFlow(nn.Module):
         self.encoder = encoder
         self.unified_decoder = unified_decoder
         self.integrator = integrator
+        self.flow_div = FlowDiv(self.input_size)
         self.clip_flow = ClipFlow(clip_flow)
 
         for param in self.pretrained_encoder.parameters():
@@ -305,7 +326,7 @@ class UnifiedSegmentFlow(nn.Module):
         assert decoding.ndim == 5
         assert decoding.shape[1] >= 3
         flow = decoding.narrow(1, 0, 3)
-        flow = self.clip_flow(flow)
+        flow = self.clip_flow.clip_flow_field(flow)
         return flow
 
     @staticmethod
@@ -334,17 +355,16 @@ class UnifiedSegmentFlow(nn.Module):
 
     def predict(self, image, batched_verts):
         assert image.ndim == 5
-        flow_div = FlowDiv(self.input_size)
 
         with torch.no_grad():
-            pre_encoding = self.get_encoder_input(image)
+            pre_encoding = self.get_pre_encoding(image)
             lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
 
         encoding = self.get_encoding(pre_encoding, lt_deformed_vertices)
         decoding = self.unified_decoder(encoding)
 
         flow_field = self.get_flow_from_decoding(decoding)
-        flow_and_div = flow_div.get_flow_div(flow_field)
+        flow_and_div = self.flow_div.get_flow_div(flow_field)
         deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
 
         predicted_segmentation = self.get_segmentation_from_decoding(decoding)

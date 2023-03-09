@@ -33,7 +33,7 @@ class SaveBestModel:
     def save_loss(self, loss_dict, filename):
         output_file = os.path.join(self.root_dir, filename)
         df = pd.DataFrame(loss_dict)
-        df.to_csv(output_file, filename)
+        df.to_csv(output_file, index=False)
 
 
 def vtk_image_to_torch(img):

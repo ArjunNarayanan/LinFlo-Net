@@ -52,7 +52,9 @@ def initialize_model(model_config):
     flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
 
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
-    net = EncodeLinearTransformSegmentFlow(pretrained_encoder,
+    input_shape = model_config["encoder"]["input_shape"]
+    net = EncodeLinearTransformSegmentFlow(input_shape,
+                                           pretrained_encoder,
                                            pretrained_linear_transform,
                                            encoder,
                                            segment_decoder,
@@ -61,7 +63,7 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "output/segment_flow/model-2/config.yml"
+config_fn = "config/segment_flow/model-7/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
@@ -98,14 +100,15 @@ print_memory_allocated("After next iter dataloader :")
 print("Time : ", stop - start)
 
 start = time.perf_counter()
-pre_encoding = net.pretrained_encoder(img)
-pre_encoding = torch.cat([img, pre_encoding], dim=1)
+with torch.no_grad():
+    pre_encoding = net.get_encoder_input(img)
 stop = time.perf_counter()
 print_memory_allocated("After pre-encoder :")
 print("Time : ", stop - start)
 
 start = time.perf_counter()
-lt_deformed_vertices = net.pretrained_linear_transform(pre_encoding, batched_verts)
+with torch.no_grad():
+    lt_deformed_vertices = net.pretrained_linear_transform(pre_encoding, batched_verts)
 stop = time.perf_counter()
 print_memory_allocated("After linear transform :")
 print("Time : ", stop - start)
@@ -126,15 +129,14 @@ print("Time : ", stop - start)
 
 
 start = time.perf_counter()
-occupancy = batch_occupancy_map_from_vertices(lt_deformed_vertices, batch_size, input_shape)
-encoding = torch.cat([encoding, occupancy], dim=1)
+encoding = net.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, net.input_size)
 stop = time.perf_counter()
 print_memory_allocated("After occupancy map :")
 print("Time : ", stop - start)
 
 start = time.perf_counter()
 flow = net.flow_decoder(encoding)
-flow_and_div = flow_div.get_flow_div(flow)
+flow_and_div = net.flow_div.get_flow_div(flow)
 stop = time.perf_counter()
 print_memory_allocated("After generating flow and div :")
 print("Time : ", stop - start)
@@ -165,7 +167,7 @@ print_memory_allocated("After chamfer loss :")
 print("Time : ", stop - start)
 
 start = time.perf_counter()
-divergence_loss = mean_divergence_loss(div_integral)
+divergence_loss = average_divergence_loss(div_integral)
 stop = time.perf_counter()
 print_memory_allocated("After divergence loss :")
 print("Time : ", stop - start)

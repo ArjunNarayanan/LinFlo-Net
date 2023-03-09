@@ -73,8 +73,7 @@ if __name__ == "__main__":
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    best_model_fn = os.path.join(output_dir, "best_model_dict.pth")
-    save_best_model = SaveBestModel(best_model_fn)
+    save_best_model = SaveBestModel(output_dir)
 
     num_epochs = config["train"]["num_epochs"]
     loss_config = config["loss"]

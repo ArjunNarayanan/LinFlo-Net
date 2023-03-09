@@ -33,10 +33,10 @@ model:
 loss:
     norm_type: 1
     chamfer_distance: 1
-    chamfer_normal: 0.05
-    divergence: 0.05
-    cross_entropy: 0.2
-    dice: 1
+    chamfer_normal: 0.1
+    divergence: 0.01
     edge: 50
-    normal: 2
+    normal: 5
     laplace: 10
+    cross_entropy: 0.2
+    dice: 0.5

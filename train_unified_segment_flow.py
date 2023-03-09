@@ -13,26 +13,24 @@ device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
 def initialize_model(model_config):
+    pretrained_encoder = torch.load(model_config["pretrained_encoder"], map_location=device)
     pretrained_linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
     encoder = Unet.from_dict(model_config["encoder"])
 
     decoder_input_channels = model_config["encoder"]["uparm_channels"][-1]
-    decoder_hidden_channels = model_config["segment"]["decoder_hidden_channels"]
-    decoder_output_channels = model_config["segment"]["output_channels"]
-    segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
+    decoder_hidden_channels = model_config["decoder"]["hidden_channels"]
+    decoder_output_channels = model_config["decoder"]["output_channels"]
+    unified_decoder = UnifiedDecoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
 
-    # since we add occupancy as a new channel, input channels increases by one
-    decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
-    flow_clip_value = model_config["flow"]["clip"]
-    flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
-
+    flow_clip_value = model_config["clip_flow"]
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
-    net = LinearTransformSegmentFlow(INPUT_SHAPE,
-                                     pretrained_linear_transform,
-                                     encoder,
-                                     segment_decoder,
-                                     flow_decoder,
-                                     integrator)
+    net = UnifiedSegmentFlow(INPUT_SHAPE,
+                            pretrained_encoder,
+                            pretrained_linear_transform,
+                            encoder,
+                            unified_decoder,
+                            integrator,
+                            flow_clip_value)
     return net
 
 
@@ -73,8 +71,7 @@ if __name__ == "__main__":
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    best_model_fn = os.path.join(output_dir, "best_model_dict.pth")
-    save_best_model = SaveBestModel(best_model_fn)
+    save_best_model = SaveBestModel(output_dir)
 
     num_epochs = config["train"]["num_epochs"]
     loss_config = config["loss"]
