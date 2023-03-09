@@ -13,17 +13,17 @@ def plot_file(fn, ax):
 
 
 
-fig, ax = plt.subplots()
-base_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/indexed_raw_validation/ct/image"
-filename = "sample00.nii.gz"
+# fig, ax = plt.subplots()
+base_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/test/mr/image"
+filename = "mr_test_2004_image.nii.gz"
 img_fn = os.path.join(base_dir, filename)
 img = sitk.ReadImage(img_fn)
 img_arr = sitk.GetArrayFromImage(img).ravel()
 
-m = img_arr.mean()
-s = img_arr.std()
-img_arr = (img_arr - m)/s
+# m = img_arr.mean()
+# s = img_arr.std()
+# img_arr = (img_arr - m)/s
 label = filename.split(".")[0]
 ax.hist(img_arr, label=label, alpha=0.3, density=True)
-# ax.legend()
+ax.legend()
 # fig.savefig("output/test/ct_hist.png")
