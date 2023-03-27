@@ -16,7 +16,6 @@ class SaveBestModel:
         self.root_dir = root_dir
         self.best_validation_loss = best_valid_loss
         self.best_model_file = os.path.join(self.root_dir, "best_model.pth")
-        self.checkpoint_file = os.path.join(self.root_dir, "model-0.pth")
 
     def save_best_model(self, current_validation_loss, epoch, data):
         if current_validation_loss < self.best_validation_loss:
@@ -27,8 +26,8 @@ class SaveBestModel:
 
     def save_checkpoint(self, epoch, data):
         print(f"\nSaving checkpoint at epoch {epoch}")
-        self.checkpoint_file = os.path.join(self.root_dir, "model-" + str(epoch) + ".pth")
-        torch.save(data, self.checkpoint_file)
+        checkpoint_file = os.path.join(self.root_dir, "model-" + str(epoch) + ".pth")
+        torch.save(data, checkpoint_file)
 
     def save_loss(self, loss_dict, filename):
         output_file = os.path.join(self.root_dir, filename)
