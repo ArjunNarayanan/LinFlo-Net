@@ -49,10 +49,11 @@ def step_training_epoch(
         template,
         loss_config,
         checkpointer,
-        eval_frequency=0.1
+        eval_frequency
 ):
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
+    assert 0 < eval_frequency < 1
 
     eval_counter = 0
     eval_every = int(math.ceil(eval_frequency * len(dataloader)))
@@ -131,7 +132,8 @@ def run_training_loop(net,
                       template,
                       loss_config,
                       checkpointer,
-                      num_epochs):
+                      num_epochs,
+                      eval_frequency):
     train_loss = defaultdict(list)
     validation_loss = defaultdict(list)
 
@@ -146,7 +148,8 @@ def run_training_loop(net,
             validation_dataset,
             template,
             loss_config,
-            checkpointer
+            checkpointer,
+            eval_frequency
         )
 
         for (k, v) in avg_train_loss.items():

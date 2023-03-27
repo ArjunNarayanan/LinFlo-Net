@@ -1,15 +1,11 @@
 from src.linear_transform import LinearTransformNet
 from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_dataloader
-from src.template import Template, BatchTemplate
-from src.flow_loss import *
-import math
-import yaml
+from src.template import Template
 import argparse
-import numpy as np
 from src.io_utils import SaveBestModel, load_yaml_config
 import torch
 import os
-import train_segment_flow_workflow as workflow
+import train_workflow as workflow
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
@@ -58,6 +54,7 @@ if __name__ == "__main__":
     save_best_model = SaveBestModel(output_dir)
 
     num_epochs = config["train"]["num_epochs"]
+    eval_frequency = config["train"].get("eval_frequency", 0.1)
     loss_config = config["loss"]
 
     train_loss, validation_loss = workflow.run_training_loop(net,
@@ -68,6 +65,7 @@ if __name__ == "__main__":
                                                              template,
                                                              loss_config,
                                                              save_best_model,
-                                                             num_epochs)
+                                                             num_epochs,
+                                                             eval_frequency)
 
     print("\n\nCOMPLETED TRAINING MODEL")

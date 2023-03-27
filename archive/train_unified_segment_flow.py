@@ -7,7 +7,7 @@ from src.dataset import ImageSegmentationMeshDataset, image_segmentation_mesh_da
 from src.io_utils import SaveBestModel, load_yaml_config
 from src.template import Template
 import argparse
-import train_segment_flow_workflow as workflow
+import train_workflow as workflow
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
