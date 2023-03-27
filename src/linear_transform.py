@@ -102,6 +102,11 @@ class LinearTransformNet(nn.Module):
     def deform_vertices(self, image, vertices):
         return self.forward(image, vertices)
 
+    def predict(self, image, vertices):
+        deformed_vertices = self(image, vertices)
+        predictions = {"deformed_vertices": deformed_vertices}
+        return predictions
+
 
 class LinearTransformWithEncoder(nn.Module):
     def __init__(self, pretrained_encoder, linear_transform):

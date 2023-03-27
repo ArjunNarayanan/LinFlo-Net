@@ -60,17 +60,10 @@ def step_training_epoch(
     norm_type = loss_config["norm_type"]
     print("USING NORM TYPE : ", norm_type)
 
-    cross_entropy_evaluator = CrossEntropyLoss(reduction="mean")
-    soft_dice_evaluator = SoftDiceLoss()
-    loss_evaluators = {"cross_entropy": cross_entropy_evaluator,
-                       "dice": soft_dice_evaluator}
+    loss_evaluators = get_loss_evaluators(loss_config)
 
     running_training_loss = defaultdict(float)
     running_validation_loss = defaultdict(float)
-
-    scale_perturb = 0.1
-    translate_perturb = 0.1
-    rotate_perturb = 0.1
 
     for (idx, data) in enumerate(dataloader):
         optimizer.zero_grad(set_to_none=True)

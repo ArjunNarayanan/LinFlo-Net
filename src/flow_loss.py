@@ -1,4 +1,5 @@
 from src.loss import *
+from torch.nn import CrossEntropyLoss
 
 
 def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_config):
@@ -48,3 +49,12 @@ def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_con
 
     return loss_components
 
+
+def get_loss_evaluators(loss_config):
+    evaluators = {}
+    if "cross_entropy" in loss_config:
+        evaluators["cross_entropy"] = CrossEntropyLoss(reduction="mean")
+    if "dice" in loss_config:
+        evaluators["dice"] = SoftDiceLoss()
+
+    return evaluators
