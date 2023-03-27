@@ -1,8 +1,8 @@
 data:
-    train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
-    validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
+    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/combined
+    validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/combined
     template_filename: data/template/highres_template.vtp
-    outpud_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/linear_transform/direct_linear_transform
+    outpud_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/linear_transform/
 train:
     num_epochs: 50
     batch_size: 2
