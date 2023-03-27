@@ -11,7 +11,8 @@ def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_con
                                                            ground_truth["meshes"],
                                                            loss_config["norm_type"])
         loss_components["chamfer_distance"] = loss_config["chamfer_distance"] * chd
-        loss_components["chamfer_normal"] = loss_config["chamfer_normal"] * chn
+        if loss_config.get("chamfer_normal", 0) > 0:
+            loss_components["chamfer_normal"] = loss_config["chamfer_normal"] * chn
 
     # Divergence integral
     if loss_config.get("divergence", 0) > 0:

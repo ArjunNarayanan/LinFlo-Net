@@ -26,7 +26,7 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-config_fn = "output/linear_transform/direct_linear_transform/config.yml"
+config_fn = "config/linear_transform/direct_linear_transform/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
@@ -34,9 +34,6 @@ with open(config_fn, "r") as config_file:
 net_config = config["model"]
 net = LinearTransformNet.from_dict(net_config)
 net.to(device)
-
-dice_loss_evaluator = SoftDiceLoss()
-cross_entropy_loss_evaluator = CrossEntropyLoss()
 
 print("Num model parameters : ", count_parameters(net), "\n\n")
 print_memory_allocated("After model load : ")

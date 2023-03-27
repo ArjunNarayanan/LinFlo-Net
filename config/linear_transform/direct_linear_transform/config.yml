@@ -2,7 +2,7 @@ data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/combined
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/combined
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/linear_transform/direct_linear_transform
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/linear_transform/
 train:
     num_epochs: 50
     batch_size: 2
@@ -18,7 +18,7 @@ model:
     input_shape: 128
     input_channels: 1
     first_layer_channels: 64
-    downarm_channels: [64, 128, 256, 512, 1024]
+    downarm_channels: [64, 128, 256, 512, 512]
 loss:
     norm_type: 1
     chamfer_distance: 1

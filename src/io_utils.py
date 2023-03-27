@@ -178,8 +178,9 @@ def pytorch3d_to_vtk(pytorch3d_mesh):
 def loss2str(loss_components):
     out_str = ""
     if "chamfer_distance" in loss_components:
-        out_str += "CHD {:1.3e} | CHN {:1.3e} | ".format(loss_components["chamfer_distance"],
-                                                         loss_components["chamfer_normal"])
+        out_str += "CHD {:1.3e} | ".format(loss_components["chamfer_distance"])
+    if "chamfer_normal" in loss_components:
+        out_str += "CHN {:1.3e} | ".format(loss_components["chamfer_normal"])
     if "divergence" in loss_components:
         out_str += "DIV {:1.3e} | ".format(loss_components["divergence"])
     if "cross_entropy" in loss_components:
