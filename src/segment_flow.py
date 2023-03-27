@@ -67,13 +67,19 @@ class Decoder(nn.Module):
         return x
 
 
+def initialize_small_flow_weights(decoder):
+    decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(decoder.weight.shape))
+    decoder.bias = nn.Parameter(torch.zeros(decoder.bias.shape))
+
+
 class FlowDecoder(Decoder):
     def __init__(self, input_channels, hidden_channels, clip_value):
         super().__init__(input_channels, hidden_channels, 3)
         self.clip_flow = ClipFlow(clip_value)
 
-        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
-        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
+        initialize_small_flow_weights(self.decoder)
+        # self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        # self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
 
     def forward(self, x):
         flow = super().forward(x)
@@ -81,24 +87,20 @@ class FlowDecoder(Decoder):
         return flow
 
 
-class UnifiedDecoder(nn.Module):
-    def __init__(self, input_channels, hidden_channels, output_channels):
+class LinearFlowDecoder(nn.Module):
+    def __init__(self, input_channels, clip_value):
         super().__init__()
+        self.clip_flow = ClipFlow(clip_value)
+        self.decoder = nn.Conv3d(input_channels, 3, kernel_size=1)
 
-        self.input_channels = input_channels
-        self.hidden_channels = hidden_channels
-        self.output_channels = output_channels
-
-        self.conv = ConvINormConv(input_channels, hidden_channels)
-        self.decoder = nn.Conv3d(hidden_channels, output_channels, kernel_size=1)
-
-        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
-        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
+        initialize_small_flow_weights(self.decoder)
+        # self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        # self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
 
     def forward(self, x):
-        x = self.conv(x)
-        x = self.decoder(x)
-        return x
+        flow = self.decoder(x)
+        flow = self.clip_flow.clip_flow_field(flow)
+        return flow
 
 
 class SoftClipFlowDecoder(Decoder):
@@ -278,5 +280,3 @@ class LinearTransformSegmentFlow(nn.Module):
                        "divergence_integral": div_integral}
 
         return predictions
-
-
