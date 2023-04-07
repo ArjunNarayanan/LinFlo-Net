@@ -116,7 +116,6 @@ if __name__ == "__main__":
     print("LOADING MODEL AT : ", model_fn, "\n\n")
 
     model = torch.load(model_fn, map_location=torch.device("cpu"))["model"]
-
     model.eval()
 
     template_fn = config["files"]["template"]

@@ -1,0 +1,6 @@
+files:
+  model: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/segment_flow/pretrained_direct_linear_transform.pth
+  out_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/linear_transform/evaluation/mr
+  template: data/template/highres_template.vtp
+  root_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/indexed_raw_validation/mr
+modality: mr

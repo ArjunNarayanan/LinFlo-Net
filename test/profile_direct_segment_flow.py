@@ -12,6 +12,7 @@ from src.dataset import image_segmentation_mesh_dataloader
 from src.template import Template, BatchTemplate
 import yaml
 import time
+import train_direct_segment_flow as setup
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
@@ -34,17 +35,13 @@ def initialize_model(model_config):
     encoder = Unet.from_dict(model_config["encoder"])
 
     decoder_input_channels = model_config["encoder"]["uparm_channels"][-1]
-    decoder_hidden_channels = model_config["segment"]["decoder_hidden_channels"]
     decoder_output_channels = model_config["segment"]["output_channels"]
-    segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
+    segment_decoder = nn.Conv3d(decoder_input_channels, decoder_output_channels, kernel_size=1)
 
-    # since we add occupancy as a new channel, input channels increases by one
-    decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
     flow_clip_value = model_config["flow"]["clip"]
-    flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
+    flow_decoder = LinearFlowDecoder(decoder_input_channels, flow_clip_value)
 
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
-    input_shape = model_config["encoder"]["input_shape"]
     net = LinearTransformSegmentFlow(input_shape,
                                      pretrained_linear_transform,
                                      encoder,
@@ -54,7 +51,7 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "config/segment_flow/direct-1/config.yml"
+config_fn = "config/cropped_segment_flow/model-1/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 

@@ -1,15 +1,18 @@
-# NOTES: Baseline model
+# Based on model-1
+# Changes: 
+#   increasing weight decay to avoid overfitting
+#   increase normal and normal consistency loss to avoid distortions
 data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/combined
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/combined
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/segment_flow/model-1
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/segment_flow/model-2
 train:
     num_epochs: 50
     batch_size: 1
     optimizer:
         lr: 5.e-5
-        weight_decay: 5.e-5
+        weight_decay: 5.e-4
     scheduler:
         factor: 0.9
         patience: 5
@@ -25,7 +28,7 @@ model:
         downarm_channels: [32, 32, 64, 128, 256, 256]
         uparm_channels: [256, 256, 128, 64, 64, 64]
     flow:
-        clip: 0.01
+        clip: 0.05
     segment:
         output_channels: 8
     integrator:
@@ -35,7 +38,7 @@ loss:
     chamfer_distance: 1
     chamfer_normal: 1
     divergence: 0
-    edge: 100
+    edge: 20
     normal: 10
     laplace: 10
     cross_entropy: 1
