@@ -24,6 +24,11 @@ class UnetSegment(nn.Module):
         x = self.decoder(x)
         return x
 
+    def predict(self, image):
+        segmentation = self(image)
+        prediction = {"segmentation": segmentation}
+        return prediction
+
     def get_segmentation(self, x):
         return self.forward(x)
 

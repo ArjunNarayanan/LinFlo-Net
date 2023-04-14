@@ -1,75 +1,61 @@
-import os
 import torch.optim.lr_scheduler
 from src.unet_segment import *
-from src.loss import SoftDiceLoss
-from torch.nn import CrossEntropyLoss
+from src.flow_loss import *
 from src.dataset import *
-from src.io_utils import SaveBestModel
+from src.io_utils import SaveBestModel, loss2str
 import math
 import yaml
 import argparse
-import numpy as np
-from torch.utils.data import DataLoader
+from collections import defaultdict
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
-def evaluate_model(net, dataset, loss_weights):
+def evaluate_model(net, dataset, loss_evaluators, loss_config):
     assert len(dataset) > 0
-    avg_dice_loss = 0.0
-    avg_cross_entropy_loss = 0.0
+    running_validation_loss = defaultdict(float)
 
-    dice_loss_evaluator = SoftDiceLoss()
-    cross_entropy_loss_evaluator = CrossEntropyLoss()
-
-    print("\n\nEVALUATING TEST LOSS\n\n")
-
-    net.eval()
     for (idx, data) in enumerate(dataset):
         image = data["image"].unsqueeze(0).to(device).to(memory_format=torch.channels_last_3d)
         segmentation = data["segmentation"].unsqueeze(0).to(device)
+        ground_truth = {"segmentation": segmentation}
 
         with torch.no_grad():
-            prediction = net(image)
+            prediction = net.predict(image)
 
-        dice = dice_loss_evaluator(prediction, segmentation)
-        cross_entropy = cross_entropy_loss_evaluator(prediction, segmentation)
+        loss_components = compute_loss_components(prediction, ground_truth, loss_evaluators, loss_config)
 
-        avg_dice_loss += dice.item()
-        avg_cross_entropy_loss += cross_entropy.item()
+        for (k, v) in loss_components.items():
+            running_validation_loss[k] += v.item()
 
-    avg_dice_loss /= len(dataset)
-    avg_cross_entropy_loss /= len(dataset)
-    total = loss_weights["dice"] * avg_dice_loss + loss_weights["cross_entropy"] * avg_cross_entropy_loss
+    num_data_points = len(dataset)
+    for (k, v) in running_validation_loss.items():
+        running_validation_loss[k] /= num_data_points
 
-    out_str = "\tDice {:1.3e} | Cross-Entropy {:1.3e} | Total {:1.3e}".format(
-        avg_dice_loss,
-        avg_cross_entropy_loss,
-        total
-    )
-    print(out_str)
-    print("\n\n")
-
-    net.train()
-
-    return total
+    return running_validation_loss
 
 
-def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation_dataset,
-                        loss_weights, save_best_model, eval_frequency=0.1):
+def step_training_epoch(
+        epoch,
+        net,
+        optimizer,
+        scheduler,
+        dataloader,
+        validation_dataset,
+        loss_config,
+        checkpointer,
+        eval_frequency
+):
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
-    assert eval_frequency > 0 and eval_frequency < 1
+    assert 0 < eval_frequency < 0.1
 
-    avg_train_loss = 0.0
-    avg_validation_loss = 0.0
+    running_training_loss = defaultdict(float)
+    running_validation_loss = defaultdict(float)
 
     eval_every = int(math.ceil(eval_frequency * len(dataloader)))
 
-    dice_loss_evaluator = SoftDiceLoss()
-    cross_entropy_loss_evaluator = CrossEntropyLoss(reduction="mean")
-    dice_weight = loss_weights["dice"]
-    cross_entropy_weight = loss_weights["cross_entropy"]
+    loss_evaluators = get_loss_evaluators(loss_config)
     eval_counter = 0
 
     for (idx, data) in enumerate(dataloader):
@@ -77,62 +63,92 @@ def step_training_epoch(epoch, net, optimizer, scheduler, dataloader, validation
 
         image = data["image"].to(device).to(memory_format=torch.channels_last_3d)
         gt_segmentation = data["segmentation"].to(device)
+        ground_truth = {"segmentation": gt_segmentation}
 
-        prediction = net(image)
+        prediction = net.predict(image)
 
-        dice = dice_loss_evaluator(prediction, gt_segmentation)
-        cross_entropy = cross_entropy_loss_evaluator(prediction, gt_segmentation)
+        loss_components = compute_loss_components(prediction, ground_truth, loss_evaluators, loss_config)
 
-        loss = dice_weight * dice + cross_entropy_weight * cross_entropy
+        loss = loss_components["total"]
         loss.backward()
         optimizer.step()
 
-        avg_train_loss += dice.item()
+        for (k, v) in loss_components.items():
+            running_training_loss[k] += v.item()
 
         lr = optimizer.param_groups[0]["lr"]
-        out_str = "\tBatch {:04d} | Dice {:1.3e} | Cross-Entropy {:1.3e} | Total {:1.3e} | LR {:1.3e}".format(
-            idx,
-            dice.item(),
-            cross_entropy.item(),
-            loss.item(),
-            lr
-        )
+        out_str = loss2str(loss_components)
+        out_str = "\tBatch {:04d} | ".format(idx) + out_str + "LR {:1.3e}".format(lr)
         print(out_str)
 
         if (idx + 1) % eval_every == 0:
+            print("\n\n\tEVALUATING MODEL")
             eval_counter += 1
-            validation_loss = evaluate_model(net, validation_dataset, loss_weights)
+            validation_loss_components = evaluate_model(net, validation_dataset, loss_evaluators, loss_config)
+            out_str = "\t\t" + loss2str(validation_loss_components) + "\n\n"
+            print(out_str)
+            total_validation_loss = validation_loss_components["total"]
             save_data = {"model": net, "optimizer": optimizer}
-            save_best_model(validation_loss, epoch, save_data)
-            avg_validation_loss += validation_loss
-            scheduler.step(validation_loss)
+            checkpointer.save_best_model(total_validation_loss, epoch, save_data)
+            scheduler.step(total_validation_loss)
 
-    avg_train_loss /= len(dataloader)
+            for (k, v) in validation_loss_components.items():
+                running_validation_loss[k] += v
+
+    num_data_points = len(dataloader)
+
+    for (k, v) in running_training_loss.items():
+        running_training_loss[k] /= num_data_points
+
     if eval_counter > 0:
-        avg_validation_loss /= eval_counter
+        for (k, v) in running_validation_loss.items():
+            running_validation_loss[k] /= eval_counter
 
-    return avg_train_loss, avg_validation_loss
+    return running_training_loss, running_validation_loss
 
 
-def run_training_loop(net, optimizer, scheduler, dataloader, validation_dataset, loss_weights, num_epochs,
-                      save_best_model):
-    train_loss = []
-    validation_loss = []
+def run_training_loop(
+        net,
+        optimizer,
+        scheduler,
+        dataloader,
+        validation_dataset,
+        loss_config,
+        num_epochs,
+        save_best_model
+):
+    train_loss = defaultdict(list)
+    validation_loss = defaultdict(list)
 
     for epoch in range(num_epochs):
         print("\n\nSTARTING EPOCH {:03d}\n\n".format(epoch))
-        avg_train_loss, avg_validation_loss = step_training_epoch(epoch, net, optimizer, scheduler, dataloader,
-                                                                  validation_dataset, loss_weights, save_best_model)
-
-        train_loss.append(avg_train_loss)
-        validation_loss.append(avg_validation_loss)
-
-        out_str = "\n\nEpoch {:03d} | Train Loss {:1.3e} | Validation Loss {:1.3e}\n\n".format(
+        avg_train_loss, avg_validation_loss = step_training_epoch(
             epoch,
-            avg_train_loss,
-            avg_validation_loss
+            net,
+            optimizer,
+            scheduler,
+            dataloader,
+            validation_dataset,
+            loss_config,
+            save_best_model,
+            eval_frequency
         )
+
+        for (k, v) in avg_train_loss.items():
+            train_loss[k].append(v)
+
+        for (k, v) in avg_validation_loss.items():
+            validation_loss[k].append(v)
+
+        print("\n\n\t\tEPOCH {:03d}".format(epoch))
+        out_str = "AVG TRAIN LOSS : \t" + loss2str(avg_train_loss)
         print(out_str)
+        out_str = "AVG VALID LOSS : \t" + loss2str(avg_validation_loss)
+        print(out_str)
+
+        print("\n\nWRITING LOSS DATA\n\n")
+        save_best_model.save_loss(train_loss, "train_loss.csv")
+        save_best_model.save_loss(validation_loss, "validation_loss.csv")
 
     return train_loss, validation_loss
 
@@ -160,7 +176,7 @@ if __name__ == "__main__":
     validation_dataset = ImageSegmentationMeshDataset(validation_folder)
 
     net_config = config["model"]
-    net = ResUnetSegment.from_dict(net_config)
+    net = UnetSegment.from_dict(net_config)
     net.to(device)
 
     optimizer_config = config["train"]["optimizer"]
@@ -176,16 +192,22 @@ if __name__ == "__main__":
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    best_model_fn = os.path.join(output_dir, "best_model_dict.pth")
-    save_best_model = SaveBestModel(best_model_fn)
+    save_best_model = SaveBestModel(output_dir)
 
     num_epochs = config["train"]["num_epochs"]
-    loss_weights = config["loss"]
+    eval_frequency = config["train"].get("eval_frequency", 0.1)
+    loss_config = config["loss"]
 
-    train_loss, test_loss = run_training_loop(net, optimizer, scheduler, train_dataloader, validation_dataset,
-                                              loss_weights,
-                                              num_epochs, save_best_model)
+    train_loss, validation_loss = run_training_loop(
+        net,
+        optimizer,
+        scheduler,
+        train_dataloader,
+        validation_dataset,
+        loss_config,
+        save_best_model,
+        num_epochs,
+        eval_frequency
+    )
 
-    output_data = np.array([train_loss, test_loss]).T
-    df_outfile = os.path.join(output_dir, "loss_history.csv")
-    np.savetxt(df_outfile, output_data, delimiter=",", header="train loss, test loss")
+    print("\n\nCOMPLETED TRAINING MODEL")
