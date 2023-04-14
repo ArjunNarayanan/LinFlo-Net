@@ -16,11 +16,13 @@ def initialize_model(model_config):
     encoder = Unet.from_dict(model_config["encoder"])
 
     decoder_input_channels = model_config["encoder"]["uparm_channels"][-1]
+    decoder_hidden_channels = model_config["segment"]["hidden_channels"]
     decoder_output_channels = model_config["segment"]["output_channels"]
-    segment_decoder = nn.Conv3d(decoder_input_channels, decoder_output_channels, kernel_size=1)
+    segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
 
     flow_clip_value = model_config["flow"]["clip"]
-    flow_decoder = LinearFlowDecoder(decoder_input_channels, flow_clip_value)
+    decoder_hidden_channels = model_config["flow"]["hidden_channels"]
+    flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
 
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
     net = LinearTransformSegmentFlow(INPUT_SHAPE,

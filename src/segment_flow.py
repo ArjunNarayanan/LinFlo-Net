@@ -77,9 +77,8 @@ class FlowDecoder(Decoder):
         super().__init__(input_channels, hidden_channels, 3)
         self.clip_flow = ClipFlow(clip_value)
 
-        initialize_small_flow_weights(self.decoder)
-        # self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
-        # self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
+        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
 
     def forward(self, x):
         flow = super().forward(x)
@@ -93,9 +92,8 @@ class LinearFlowDecoder(nn.Module):
         self.clip_flow = ClipFlow(clip_value)
         self.decoder = nn.Conv3d(input_channels, 3, kernel_size=1)
 
-        initialize_small_flow_weights(self.decoder)
-        # self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
-        # self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
+        self.decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(self.decoder.weight.shape))
+        self.decoder.bias = nn.Parameter(torch.zeros(self.decoder.bias.shape))
 
     def forward(self, x):
         flow = self.decoder(x)
