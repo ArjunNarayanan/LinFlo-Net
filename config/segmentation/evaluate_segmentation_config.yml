@@ -1,6 +1,6 @@
-dataset: /Users/arjun/Documents/Research/SimCardio/Datasets/HeartDataSegmentation/validation
-model: output/segmentation/res_unet/best_model_dict.pth
-output_folder: output/segmentation/res_unet/evaluation/
+dataset: 
+model: 
+output_folder: 
 output_file: validation_dice.csv
 header: ["Background", "Left Ventricle", "Left Atrium", "LV Blood Pool", "Right Atrium", "Right Ventricle",
                     "Aorta", "Pulmonary Artery"]

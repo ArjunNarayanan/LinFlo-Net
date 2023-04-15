@@ -80,6 +80,7 @@ if __name__ == "__main__":
 
     num_epochs = config["train"]["num_epochs"]
     loss_config = config["loss"]
+    eval_frequency = config["train"].get("eval_frequency", 0.1)
 
     train_loss, test_loss = workflow.run_training_loop(net,
                                                        optimizer,
@@ -89,6 +90,7 @@ if __name__ == "__main__":
                                                        template,
                                                        loss_config,
                                                        save_best_model,
-                                                       num_epochs)
+                                                       num_epochs,
+                                                       eval_frequency)
 
     print("\n\nCOMPLETED TRAINING MODEL")

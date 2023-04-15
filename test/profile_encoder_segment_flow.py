@@ -63,7 +63,7 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "config/segment_flow/model-4/config.yml"
+config_fn = "config/segment_flow/model-3/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 

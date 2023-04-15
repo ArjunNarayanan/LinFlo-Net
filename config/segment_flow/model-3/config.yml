@@ -1,9 +1,9 @@
 # NOTES: THIS MODEL USES SMALLER WEIGHT ON DIVERGENCE LOSS
 data:
-    train_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/train
-    validation_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/validation
+    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/train
+    validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/validation
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/model-3
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/trained_models/segment_flow/model-3-rerun
 train:
     num_epochs: 50
     batch_size: 1
@@ -16,14 +16,14 @@ train:
         threshold: 1.e-4
         min_lr: 1.e-6
 model:
-    pretrained_encoder: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/pretrained_encoder.pth
-    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/HeartDataSegmentation/trained_models/segment_flow/pretrained_linear_transform.pth
+    pretrained_encoder: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/trained_models/segment_flow/pretrained_encoder.pth
+    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/trained_models/segment_flow/pretrained_linear_transform.pth
     encoder:
         input_shape: 128
         input_channels: 65
         first_layer_channels: 32
-        downarm_channels: [32, 32, 64, 128, 256]
-        uparm_channels: [256, 128, 64, 32, 32]
+        downarm_channels: [32, 32, 64, 128, 128]
+        uparm_channels: [128, 128, 64, 32, 32]
     flow:
         decoder_hidden_channels: 32
         clip: 0.05
