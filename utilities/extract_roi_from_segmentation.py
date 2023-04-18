@@ -130,7 +130,12 @@ if __name__ == "__main__":
     df[["dX", "dY", "dZ"]] = deltas
     df[["Xm", "Ym", "Zm"]] = sizes
 
-    df = df[["sample_name", "X0", "X1", "dX", "Xm", "Y0", "Y1", "dY", "Ym", "Z0", "Z1", "dZ", "Zm"]]
+    cropped_volume = dx * dy * dz
+    original_volume = sizes.prod(axis=1)
+    vol_ratio = cropped_volume/original_volume
+    df["volume_ratio"] = vol_ratio
+
+    df = df[["sample_name", "X0", "X1", "dX", "Xm", "Y0", "Y1", "dY", "Ym", "Z0", "Z1", "dZ", "Zm", "volume_ratio"]]
 
     out_dir = base_dir
     out_file = args.o
