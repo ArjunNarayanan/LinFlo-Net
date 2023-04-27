@@ -1,0 +1,6 @@
+files:
+  model: /global/scratch/users/arjunnarayanan/WholeHeartData-cropped/trained_models/segment_flow/model-1/best_model.pth
+  out_dir: /global/scratch/users/arjunnarayanan/WholeHeartData-cropped/trained_models/segment_flow/model-1/evaluation/ct
+  template: data/template/highres_template.vtp
+  root_dir: /global/scratch/users/arjunnarayanan/WholeHeartData-cropped/validation/ct/indexed_validation
+modality: ct

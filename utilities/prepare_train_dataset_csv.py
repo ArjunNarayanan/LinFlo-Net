@@ -6,27 +6,26 @@ import argparse
 
 def verify_image_and_mesh_files(root_dir):
     image_fn = os.path.join(root_dir, "vtk_image")
-    mesh_fn = os.path.join(root_dir, "vtk_segmentation")
+    seg_fn = os.path.join(root_dir, "vtk_segmentation")
+    mesh_fn = os.path.join(root_dir, "vtk_mesh")
     assert os.path.isdir(image_fn)
+    assert os.path.isdir(seg_fn)
     assert os.path.isdir(mesh_fn)
 
-    image_files = glob.glob(os.path.join(root_dir, "vtk_image/*.vti"))
+    image_files = glob.glob(os.path.join(image_fn, "*.vti"))
+    seg_files = glob.glob(os.path.join(seg_fn, "*.vti"))
+    mesh_files = glob.glob(os.path.join(mesh_fn, "*.vtp"))
+    assert len(image_files) == len(seg_files) == len(mesh_files)
 
-    print("Verifying vtk_segmentation files for each vtk_image\n")
+    print("Verifying vtk_segmentation and vtk_mesh files for each vtk_image\n")
     for fn in image_files:
         file_name_no_ext = os.path.basename(fn).split(".")[0]
-        mesh_file = os.path.join(root_dir, "vtk_segmentation", file_name_no_ext + ".vti")
+        mesh_file = os.path.join(mesh_fn, file_name_no_ext + ".vtp")
+        seg_file = os.path.join(seg_fn, file_name_no_ext + ".vti")
         if not os.path.isfile(mesh_file):
             print("Missing vtk_mesh file for : ", file_name_no_ext)
-
-    mesh_files = glob.glob(os.path.join(root_dir, "vtk_segmentation/*.vti"))
-
-    print("Verifying vtk_image files for each vtk_segmentation\n")
-    for fn in mesh_files:
-        file_name_no_ext = os.path.basename(fn).split(".")[0]
-        image_file = os.path.join(root_dir, "vtk_image", file_name_no_ext + ".vti")
-        if not os.path.isfile(image_file):
-            print("Missing vtk_image file for : ", file_name_no_ext)
+        if not os.path.isfile(seg_file):
+            print("Missing vtk_segmentation fole for : ", file_name_no_ext)
 
 
 def make_file_index(root_dir, num_files):

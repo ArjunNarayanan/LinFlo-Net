@@ -22,8 +22,8 @@ model:
         input_shape: 128
         input_channels: 65
         first_layer_channels: 32
-        downarm_channels: [32, 32, 64, 128, 128]
-        uparm_channels: [128, 128, 64, 32, 32]
+        downarm_channels: [32, 32, 64, 128, 256]
+        uparm_channels: [256, 128, 64, 32, 32]
     flow:
         decoder_hidden_channels: 32
         clip: 0.05

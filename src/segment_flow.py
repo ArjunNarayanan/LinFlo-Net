@@ -183,7 +183,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         with torch.no_grad():
             pre_encoding = self.get_encoder_input(image)
-            lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, vertices)
+            lt_deformed_vertices = self.pretrained_linear_transform(image, vertices)
 
         encoding = self.encoder(pre_encoding)
         input_shape = image.shape[-1]
@@ -197,7 +197,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         batch_size = image.shape[0]
         with torch.no_grad():
             pre_encoding = self.get_encoder_input(image)
-            lt_deformed_vertices = self.pretrained_linear_transform(pre_encoding, batched_verts)
+            lt_deformed_vertices = self.pretrained_linear_transform(image, batched_verts)
 
         encoding = self.encoder(pre_encoding)
         predicted_segmentation = self.segment_decoder(encoding)

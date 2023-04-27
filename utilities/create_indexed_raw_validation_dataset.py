@@ -52,6 +52,10 @@ if __name__ == "__main__":
     input_folder = args.f
     output_folder = args.o
 
+    assert os.path.isdir(os.path.join(input_folder, "image"))
+    assert os.path.isdir(os.path.join(input_folder, "label"))
+    assert os.path.isdir(os.path.join(input_folder, "meshes"))
+
     out_im_folder = os.path.join(output_folder, "image")
     out_seg_folder = os.path.join(output_folder, "label")
     out_mesh_folder = os.path.join(output_folder, "meshes")

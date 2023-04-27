@@ -1,7 +1,7 @@
 data:
-    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/combined
-    validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/combined
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/segmentation-1
+    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/mr/augment20/processed
+    validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/mr/processed
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/mr/segmentation-1
 train:
     num_epochs: 50
     batch_size: 1
