@@ -16,6 +16,8 @@ def create_output_folders(folder):
 
 def crop_and_write_image_segmentation(file_idx):
     fn = dataframe.loc[file_idx, "sample_name"]
+    print("Processing file : ", fn)
+
     img_file = os.path.join(input_img_dir, fn + ".nii.gz")
     seg_file = os.path.join(input_seg_dir, fn + ".nii.gz")
     assert os.path.isfile(img_file)
@@ -26,6 +28,9 @@ def crop_and_write_image_segmentation(file_idx):
 
     lower_bound = dataframe.loc[file_idx, ["X0", "Y0", "Z0"]]
     upper_bound = dataframe.loc[file_idx, ["X1", "Y1", "Z1"]]
+
+    # print("Lower bound : ", lower_bound)
+    # print("Upper bound : ", upper_bound)
 
     cropped_image = img[lower_bound[0]:upper_bound[0],
                     lower_bound[1]:upper_bound[1],

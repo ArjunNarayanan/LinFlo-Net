@@ -32,7 +32,7 @@ def get_bounds(seg, background_id=0):
     return lower, upper
 
 
-def get_perturbed_bounds_and_size(seg_fn, margin=range(20, 31)):
+def get_perturbed_bounds_and_size(seg_fn, margin=range(30, 50)):
     seg = sitk.ReadImage(seg_fn)
     lower, upper = get_bounds(seg)
 
@@ -115,27 +115,25 @@ if __name__ == "__main__":
     filepaths.sort()
     print("Found ", len(filepaths), " files")
 
-    bounds, sizes = get_all_perturbed_bounds_and_size(filepaths)
+    perturbed_bounds, sizes = get_all_perturbed_bounds_and_size(filepaths)
+    bounds = get_all_bounds(filepaths)
 
     dx = bounds[:, 1] - bounds[:, 0]
     dy = bounds[:, 3] - bounds[:, 2]
     dz = bounds[:, 5] - bounds[:, 4]
-    deltas = np.stack([dx, dy, dz], axis=1)
 
     filenames = [os.path.basename(fn) for fn in filepaths]
     index = [fn.split(".")[0] for fn in filenames]
 
     df = pd.DataFrame({"sample_name": index})
-    df[["X0", "X1", "Y0", "Y1", "Z0", "Z1"]] = bounds
-    df[["dX", "dY", "dZ"]] = deltas
-    df[["Xm", "Ym", "Zm"]] = sizes
+    df[["X0", "X1", "Y0", "Y1", "Z0", "Z1"]] = perturbed_bounds
 
     cropped_volume = dx * dy * dz
     original_volume = sizes.prod(axis=1)
     vol_ratio = cropped_volume/original_volume
     df["volume_ratio"] = vol_ratio
 
-    df = df[["sample_name", "X0", "X1", "dX", "Xm", "Y0", "Y1", "dY", "Ym", "Z0", "Z1", "dZ", "Zm", "volume_ratio"]]
+    df = df[["sample_name", "X0", "X1", "Y0", "Y1", "Z0", "Z1", "volume_ratio"]]
 
     out_dir = base_dir
     out_file = args.o
