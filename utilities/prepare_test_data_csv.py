@@ -52,9 +52,9 @@ def make_file_index(root_dir, num_files, extension):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare File Index")
-    parser.add_argument("-f", "--folder", help="Folder to process")
+    parser.add_argument("-f", "--folder", help="Folder to process", required=True)
     parser.add_argument("-n", default=-1, help="Number of files to process")
-    parser.add_argument("-e", help="File extension")
+    parser.add_argument("-e", help="File extension", default = ".nii.gz")
     args = parser.parse_args()
 
     verify_image_and_mesh_files(args.folder, args.e)

@@ -101,7 +101,8 @@ def average_normal_consistency_loss(mesh_list):
     return sum(normal_consistency_loss) / len(normal_consistency_loss)
 
 
-def average_divergence_loss(div_integral):
+def average_divergence_loss(div_integral, clamp_min):
+    div_integral = [torch.clamp(fd, min=clamp_min) for fd in div_integral]
     mean_divergence = [(-fd).exp().mean() for fd in div_integral]
     mean_divergence = sum(mean_divergence) / len(mean_divergence)
     return mean_divergence

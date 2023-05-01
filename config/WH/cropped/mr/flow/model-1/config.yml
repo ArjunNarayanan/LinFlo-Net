@@ -1,0 +1,45 @@
+# NOTES: Based on ct model-3
+#       Trained on pure MR data with no inlets / outlets
+data:
+    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/train/augment20/processed
+    validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/validation/processed
+    template_filename: data/template/highres_template.vtp
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/flow/model-1
+train:
+    num_epochs: 50
+    batch_size: 1
+    optimizer:
+        lr: 1.e-4
+        weight_decay: 1.e-3
+    scheduler:
+        factor: 0.9
+        patience: 5
+        threshold: 1.e-4
+        min_lr: 1.e-6
+model:
+    pretrained_encoder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/flow/pretrained_encoder.pth
+    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/flow/pretrained_linear_transform.pth
+    encoder:
+        input_shape: 128
+        input_channels: 65
+        first_layer_channels: 32
+        downarm_channels: [32, 32, 64, 128, 256]
+        uparm_channels: [256, 128, 64, 32, 32]
+    flow:
+        decoder_hidden_channels: 32
+        clip: 0.05
+    segment:
+        decoder_hidden_channels: 32
+        output_channels: 8
+    integrator:
+        num_steps: 5
+loss:
+    norm_type: 1
+    chamfer_distance: 1
+    chamfer_normal: 0.05
+    divergence: 0.005
+    edge: 50
+    normal: 5
+    laplace: 10
+    cross_entropy: 0.05
+    dice: 0.05

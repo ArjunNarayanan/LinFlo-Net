@@ -45,8 +45,8 @@ def make_dir(dir_name):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert dataset into indexed dataset for easier IO")
-    parser.add_argument("-f", help="path to input folder")
-    parser.add_argument("-o", help="path to output folder")
+    parser.add_argument("-f", help="path to input folder", required=True)
+    parser.add_argument("-o", help="path to output folder", required=True)
     args = parser.parse_args()
 
     input_folder = args.f

@@ -16,7 +16,8 @@ def compute_loss_components(predictions, ground_truth, loss_evaluators, loss_con
 
     # Divergence integral
     if loss_config.get("divergence", 0) > 0:
-        div_loss = loss_config["divergence"] * average_divergence_loss(predictions["divergence_integral"])
+        clamp_min = loss_config.get("divergence_min", -3.0)
+        div_loss = loss_config["divergence"] * average_divergence_loss(predictions["divergence_integral"], clamp_min)
         loss_components["divergence"] = div_loss
 
     # Cross entropy

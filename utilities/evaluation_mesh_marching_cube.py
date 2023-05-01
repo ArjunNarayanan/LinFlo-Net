@@ -50,9 +50,9 @@ def write_all_meshes(filenames, output_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate ground truth validation meshes via marching cube")
-    parser.add_argument("-f", help="Input folder with ground-truth segmentations")
-    parser.add_argument("-o", help="Output folder")
-    parser.add_argument("-e", help="Input file extension")
+    parser.add_argument("-f", help="Input folder with ground-truth segmentations", required=True)
+    parser.add_argument("-o", help="Output folder", required=True)
+    parser.add_argument("-e", help="Input file extension", default=".nii.gz")
     args = parser.parse_args()
 
     input_folder = args.f 
@@ -62,6 +62,6 @@ if __name__ == "__main__":
     if not os.path.isdir(output_folder):
         os.makedirs(output_folder)
 
-    
     filenames = glob.glob(os.path.join(input_folder, "*" + extension))
+    print("Found : ", len(filenames), " files")
     write_all_meshes(filenames, output_folder)
