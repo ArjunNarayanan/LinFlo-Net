@@ -55,13 +55,13 @@ class LinearTransformNet(nn.Module):
         downarm_channels = definition["downarm_channels"]
         return cls(input_shape, input_channels, first_layer_channels, downarm_channels)
 
-    def get_linear_transformer(self, encoding):
+    def get_linear_transformer(self, encoding, multiplication_factor):
         x = encoding.reshape([encoding.shape[0], -1])
         transform_parameters = self.linear_transform_parameters(x)
 
-        scale_by = (1.0 - transform_parameters[:, 0:3])
-        translate_by = transform_parameters[:, 3:6]
-        rotate_by = self.scale_rotation * transform_parameters[:, 6:9]
+        scale_by = (1.0 - transform_parameters[:, 0:3] * multiplication_factor)
+        translate_by = transform_parameters[:, 3:6] * multiplication_factor
+        rotate_by = self.scale_rotation * transform_parameters[:, 6:9] * multiplication_factor
 
         return LinearTransformer(scale_by, translate_by, rotate_by)
 
@@ -71,7 +71,7 @@ class LinearTransformNet(nn.Module):
         assert image.ndim == 5
         return image
 
-    def _linear_transform_vertices_list(self, image, verts_list):
+    def _linear_transform_vertices_list(self, image, verts_list, multiplication_factor):
         image = self._fix_input_shape(image)
         batch_size = image.shape[0]
         assert isinstance(verts_list, list)
@@ -80,30 +80,30 @@ class LinearTransformNet(nn.Module):
         assert all([v.shape[-1] == 3 for v in verts_list])
 
         encoding = self.encoder(image)
-        transformer = self.get_linear_transformer(encoding)
+        transformer = self.get_linear_transformer(encoding, multiplication_factor)
         deformed_verts_list = [transformer.transform(verts) for verts in verts_list]
 
         return deformed_verts_list
 
-    def _linear_transform_vertices(self, image, vertices):
+    def _linear_transform_vertices(self, image, vertices, multiplication_factor):
         assert isinstance(vertices, torch.Tensor)
 
-        verts = self._linear_transform_vertices_list(image, [vertices])
+        verts = self._linear_transform_vertices_list(image, [vertices], multiplication_factor)
         return verts[0]
 
-    def forward(self, image, vertices):
+    def forward(self, image, vertices, multiplication_factor=1.0):
         if isinstance(vertices, list):
-            return self._linear_transform_vertices_list(image, vertices)
+            return self._linear_transform_vertices_list(image, vertices, multiplication_factor)
         elif isinstance(vertices, torch.Tensor):
-            return self._linear_transform_vertices(image, vertices)
+            return self._linear_transform_vertices(image, vertices, multiplication_factor)
         else:
             raise TypeError("Expected vertices to be list of tensors or tensor, got ", type(vertices))
 
-    def deform_vertices(self, image, vertices):
-        return self.forward(image, vertices)
+    def deform_vertices(self, image, vertices, multiplication_factor=1.0):
+        return self.forward(image, vertices, multiplication_factor)
 
-    def predict(self, image, vertices):
-        deformed_vertices = self(image, vertices)
+    def predict(self, image, vertices, multiplication_factor=1.0):
+        deformed_vertices = self(image, vertices, multiplication_factor)
         predictions = {"deformed_vertices": deformed_vertices}
         return predictions
 

@@ -28,7 +28,7 @@ def plot_all_losses(train_df, validation_df, output_dir):
         plot_loss(train_loss, validation_loss, loss_name, outfile)
 
 
-root_dir = "output/cropped_segment_flow/model-2/"
+root_dir = "output/WholeHeartData/trained_models/ct/flow/model-2"
 
 output_dir = os.path.join(root_dir, "loss_plots")
 if not os.path.isdir(output_dir):
