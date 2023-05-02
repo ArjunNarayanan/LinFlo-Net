@@ -2,6 +2,8 @@ import src.io_utils as io
 import torch
 from pytorch3d.structures import Meshes
 from pytorch3d.structures import join_meshes_as_batch
+import pickle
+import os
 
 
 class Template(Meshes):
@@ -59,6 +61,45 @@ class Template(Meshes):
     def occupancy_map(self, num_grid_points):
         vertices = self.verts_packed()
         return _occupancy_map(vertices, num_grid_points)
+
+
+class TemplateWithVolume(Template):
+    def __init__(self, verts, faces, faceids_name=None, faceids=None, point_cloud=None, **kwargs):
+        super().__init__(verts, faces, faceids_name=faceids_name, faceids=faceids, **kwargs)
+        self._INTERNAL_TENSORS.append("point_cloud")
+        self.point_cloud = point_cloud
+
+    @classmethod
+    def from_pkl(cls, pickled_file, device=None):
+        assert os.path.isfile(pickled_file)
+        data = pickle.load(open(pickled_file, "rb"))
+        vertices = data["vertices"]
+        faces = data["faces"]
+        point_cloud = data["point_cloud"]
+        faceids_name = data.get("faceids_name", None)
+        faceids = data.get("faceids", None)
+
+        template = cls(vertices, faces, faceids_name=faceids_name, faceids=faceids, point_cloud=point_cloud)
+
+        if device is not None:
+            template = template.to(device)
+
+        return template
+
+    def to(self, device):
+        template = super().to(device)
+        if self.point_cloud is not None:
+            point_cloud = self.point_cloud.to(device)
+        verts_list = template.verts_list()
+        faces_list = template.faces_list()
+
+        return TemplateWithVolume(
+            verts_list,
+            faces_list,
+            point_cloud=point_cloud,
+            faceids_name=self.faceids_name,
+            faceids=self.faceids
+        )
 
 
 def _occupancy_map(vertices, num_grid_points):
@@ -164,3 +205,33 @@ class BatchTemplate():
         occupancy = [self.occupancy_map_of_batch(b, num_grid_points) for b in range(self.batch_size)]
         occupancy = torch.stack(occupancy)
         return occupancy
+
+
+class BatchTemplateWithVolume(BatchTemplate):
+    def __init__(self, meshes_list, point_cloud):
+        assert point_cloud.ndim == 3
+        batch_size = point_cloud.shape[0]
+        assert all([len(m) == batch_size for m in meshes_list])
+
+        super().__init__(meshes_list)
+        self.point_cloud = point_cloud
+
+    @classmethod
+    def from_pkl(cls, filename, batch_size, device):
+        assert os.path.isfile(filename)
+        data = pickle.load(open(filename, "rb"))
+        vertices = data["vertices"]
+        faces = data["faces"]
+        point_cloud = data["point_cloud"]
+        faceids_name = data.get("faceids_name", None)
+        faceids = data.get("faceids", None)
+
+        template = Template(vertices, faces, faceids_name=faceids_name, faceids=faceids)
+        if device is not None:
+            template = template.to(device)
+            point_cloud = point_cloud.to(device)
+
+        meshes_list = [join_meshes_as_batch([t.clone() for b in range(batch_size)]) for t in template]
+        point_cloud = point_cloud.repeat([batch_size, 1, 1])
+
+        return cls(meshes_list, point_cloud)
