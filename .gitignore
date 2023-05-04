@@ -3,6 +3,7 @@ venv
 __pycache__/
 *.out
 output/*
+test/output/*
 *.DS_Store
 bash_scripts/*
 job_scripts/*

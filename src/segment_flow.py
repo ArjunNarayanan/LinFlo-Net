@@ -1,7 +1,6 @@
 from src.unet import *
 import src.finite_difference as fd
 from src.utilities import batch_occupancy_map_from_vertices, occupancy_map
-from src.template import BatchTemplate
 
 
 class FlowDiv:
@@ -65,11 +64,6 @@ class Decoder(nn.Module):
         x = self.conv(x)
         x = self.decoder(x)
         return x
-
-
-def initialize_small_flow_weights(decoder):
-    decoder.weight = nn.Parameter(torch.distributions.normal.Normal(0, 1e-5).sample(decoder.weight.shape))
-    decoder.bias = nn.Parameter(torch.zeros(decoder.bias.shape))
 
 
 class FlowDecoder(Decoder):
@@ -177,8 +171,15 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
         return segmentation
 
-    def forward(self, image, vertices):
+    @staticmethod
+    def _fix_input_shape(image):
+        if image.ndim == 4:
+            image = image.unsqueeze(0)
         assert image.ndim == 5
+        return image
+
+    def forward(self, image, vertices, multiplication_factor=1.0):
+        image = self._fix_input_shape(image)
         batch_size = image.shape[0]
 
         with torch.no_grad():
@@ -188,12 +189,13 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         encoding = self.encoder(pre_encoding)
         input_shape = image.shape[-1]
         encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, input_shape)
-        flow = self.flow_decoder(encoding)
+        flow = self.flow_decoder(encoding) * multiplication_factor
         deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)
 
         return deformed_vertices
 
-    def predict(self, image, batched_verts):
+    def predict(self, image, batched_verts, multiplication_factor=1.0):
+        image = self._fix_input_shape(image)
         batch_size = image.shape[0]
         with torch.no_grad():
             pre_encoding = self.get_encoder_input(image)
@@ -203,7 +205,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         predicted_segmentation = self.segment_decoder(encoding)
 
         encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, self.input_size)
-        flow_field = self.flow_decoder(encoding)
+        flow_field = self.flow_decoder(encoding) * multiplication_factor
         flow_and_div = self.flow_div.get_flow_div(flow_field)
 
         deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
