@@ -4,11 +4,10 @@ import shutil
 import glob
 
 
-def clear_and_make_directory(dir):
-    if os.path.isdir(dir):
-        shutil.rmtree(dir)
-    print("Creating output directory : ", dir)
-    os.makedirs(dir)
+def make_output_directory(dir):
+    if not os.path.isdir(dir):
+        print("Creating output directory : ", dir)
+        os.makedirs(dir)
 
 
 def move_sample(sample_name):
@@ -48,7 +47,7 @@ def move_all_augmentations(augmentation_list):
         move_all_samples(filenames)
 
 
-input_dir = "/global/scratch/users/arjunnarayanan/WholeHeartData/train/ct/augment20/processed/"
+input_dir = "/global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/train/augment20/processed/"
 output_dir = "/global/scratch/users/arjunnarayanan/WholeHeart-ct-crop-mr/train"
 augmentations_list = range(10)
 
@@ -67,9 +66,9 @@ output_seg_dir = os.path.join(output_dir, "vtk_segmentation")
 output_mesh_dir = os.path.join(output_dir, "vtk_mesh")
 output_data_dir = os.path.join(output_dir, "data")
 
-clear_and_make_directory(output_img_dir)
-clear_and_make_directory(output_seg_dir)
-clear_and_make_directory(output_mesh_dir)
-clear_and_make_directory(output_data_dir)
+make_output_directory(output_img_dir)
+make_output_directory(output_seg_dir)
+make_output_directory(output_mesh_dir)
+make_output_directory(output_data_dir)
 
 move_all_augmentations(augmentations_list)
