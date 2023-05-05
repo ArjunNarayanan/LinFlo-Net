@@ -2,8 +2,8 @@ import pandas as pd
 import os
 import numpy as np
 
-input_folder = "output/segment_flow/model-4/test/dice"
-output_folder = "output/segment_flow/model-4/test"
+input_folder = "output/WholeHeartData/trained_models/ct/flow/model-1/evaluation/test/ct/dice"
+output_folder = "output/WholeHeartData/trained_models/ct/flow/model-1/evaluation/test/ct/"
 
 modality = "ct"
 all_scores = []

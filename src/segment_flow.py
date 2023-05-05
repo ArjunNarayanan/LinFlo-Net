@@ -187,7 +187,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
             lt_deformed_vertices = self.pretrained_linear_transform(image, vertices)
 
         encoding = self.encoder(pre_encoding)
-        input_shape = image.shape[-1]
+        input_shape = self.input_size
         encoding = self.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, input_shape)
         flow = self.flow_decoder(encoding) * multiplication_factor
         deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)

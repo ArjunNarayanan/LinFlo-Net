@@ -1,6 +1,5 @@
 import torch
 from src.template import Template
-from src.linear_transform import *
 import os
 import vtk_utils.vtk_utils as vtu
 import pickle
