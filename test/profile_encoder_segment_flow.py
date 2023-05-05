@@ -63,7 +63,7 @@ def initialize_model(model_config):
     return net
 
 
-config_fn = "config/segment_flow/model-3/config.yml"
+config_fn = "config/WH/ct/flow/model-5/config.yml"
 with open(config_fn, "r") as config_file:
     config = yaml.safe_load(config_file)
 
@@ -91,10 +91,11 @@ if "point_cloud_filename" in config["data"]:
 else:
     point_cloud = None
 
+print("\n\nBatching Template\n\n")
 batched_template = BatchTemplate.from_single_template(template, batch_size)
 batched_verts = batched_template.batch_vertex_coordinates()
 if point_cloud is not None:
-    batched_point_cloud = point_cloud.repeat([batch_size, 1, 1])
+    batched_point_cloud = point_cloud.repeat([batch_size, 1, 1]).to(device)
     batched_verts.append(batched_point_cloud)
 
 flow_div = FlowDiv(input_shape)
@@ -157,6 +158,8 @@ print("Time : ", stop - start)
 if point_cloud is not None:
     _ = deformed_verts.pop()
 
+print("\n\nNo. of mesh components : ", len(deformed_verts), "\n\n")
+
 start = time.perf_counter()
 batched_template.update_batched_vertices(deformed_verts, detach=False)
 stop = time.perf_counter()
@@ -175,8 +178,10 @@ stop = time.perf_counter()
 print_memory_allocated("After chamfer loss :")
 print("Time : ", stop - start)
 
+print("\n\nNo. terms in div integral : ", len(div_integral))
+
 start = time.perf_counter()
-divergence_loss = average_divergence_loss(div_integral)
+divergence_loss = average_divergence_loss(div_integral, -3.0)
 stop = time.perf_counter()
 print_memory_allocated("After divergence loss :")
 print("Time : ", stop - start)

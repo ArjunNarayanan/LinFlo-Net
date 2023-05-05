@@ -5,7 +5,7 @@ data:
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
     template_filename: data/template/highres_template.vtp
     point_cloud_filename: data/template/lv_interior_torch.pkl
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/model-4
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/model-5
 train:
     num_epochs: 50
     batch_size: 1
@@ -33,7 +33,7 @@ model:
         decoder_hidden_channels: 32
         output_channels: 8
     integrator:
-        num_steps: 5
+        num_steps: 10
 loss:
     norm_type: 1
     chamfer_distance: 1

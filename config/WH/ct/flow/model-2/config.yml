@@ -35,11 +35,11 @@ model:
         decoder_hidden_channels: 32
         output_channels: 8
     integrator:
-        num_steps: 5
+        num_steps: 10
 loss:
     norm_type: 1
     chamfer_distance: 1
-    chamfer_normal: 0.05
+    chamfer_normal: 0.5
     divergence: 0
     edge: 50
     normal: 5

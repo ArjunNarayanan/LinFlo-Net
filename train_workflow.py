@@ -84,7 +84,7 @@ def step_training_epoch(
         batched_verts = batched_template.batch_vertex_coordinates()
 
         if point_cloud is not None:
-            batched_point_cloud = point_cloud.repeat([batch_size,1,1])
+            batched_point_cloud = point_cloud.repeat([batch_size,1,1]).to(device)
             batched_verts.append(batched_point_cloud)
 
         predictions = net.predict(image, batched_verts)
