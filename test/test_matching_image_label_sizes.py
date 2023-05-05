@@ -2,7 +2,7 @@ import SimpleITK as sitk
 import os
 import pandas as pd
 
-root_dir = "/Users/arjunnarayanan/Documents/Research/Simcardio/Datasets/WholeHeartData/validation/mr"
+root_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/MMWHS_test/mr"
 extension = ".nii.gz"
 
 index_fn = os.path.join(root_dir, "index.csv")

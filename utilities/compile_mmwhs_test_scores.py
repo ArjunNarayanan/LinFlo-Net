@@ -2,10 +2,10 @@ import pandas as pd
 import os
 import numpy as np
 
-input_folder = "output/WholeHeartData/trained_models/ct/flow/model-1/evaluation/test/ct/dice"
-output_folder = "output/WholeHeartData/trained_models/ct/flow/model-1/evaluation/test/ct/"
+input_folder = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/mr/flow/model-1/evaluation/test/mr/dice"
+output_folder = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/mr/flow/model-1/evaluation/test/mr/"
 
-modality = "ct"
+modality = "mr"
 all_scores = []
 all_samples = []
 
