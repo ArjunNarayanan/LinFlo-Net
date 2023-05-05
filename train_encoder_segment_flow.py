@@ -8,6 +8,7 @@ from src.io_utils import SaveBestModel, load_yaml_config
 from src.template import Template
 import argparse
 import train_workflow as workflow
+import pickle
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
@@ -57,6 +58,11 @@ if __name__ == "__main__":
 
     tmplt_fn = config["data"]["template_filename"]
     template = Template.from_vtk(tmplt_fn, device=device)
+    if "point_cloud_filename" in config["data"]:
+        point_cloud_fn = config["data"]["point_cloud_filename"]
+        point_cloud = pickle.load(open(point_cloud_fn, "rb"))
+    else:
+        point_cloud = None
 
     model_config = config["model"]
     INPUT_SHAPE = model_config["encoder"]["input_shape"]
@@ -82,15 +88,18 @@ if __name__ == "__main__":
     loss_config = config["loss"]
     eval_frequency = config["train"].get("eval_frequency", 0.1)
 
-    train_loss, test_loss = workflow.run_training_loop(net,
-                                                       optimizer,
-                                                       scheduler,
-                                                       train_dataloader,
-                                                       validation_dataset,
-                                                       template,
-                                                       loss_config,
-                                                       save_best_model,
-                                                       num_epochs,
-                                                       eval_frequency)
+    train_loss, test_loss = workflow.run_training_loop(
+        net,
+        optimizer,
+        scheduler,
+        train_dataloader,
+        validation_dataset,
+        template,
+        loss_config,
+        save_best_model,
+        num_epochs,
+        eval_frequency,
+        point_cloud
+    )
 
     print("\n\nCOMPLETED TRAINING MODEL")

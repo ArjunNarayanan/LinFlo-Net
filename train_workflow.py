@@ -49,11 +49,16 @@ def step_training_epoch(
         template,
         loss_config,
         checkpointer,
-        eval_frequency
+        eval_frequency,
+        point_cloud
 ):
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
     assert 0 < eval_frequency < 1
+    if point_cloud is not None:
+        assert isinstance(point_cloud, torch.Tensor)
+        assert point_cloud.ndim == 2
+        assert point_cloud.shape[-1] == 3
 
     eval_counter = 0
     eval_every = int(math.ceil(eval_frequency * len(dataloader)))
@@ -78,7 +83,15 @@ def step_training_epoch(
         batched_template = BatchTemplate.from_single_template(template, batch_size)
         batched_verts = batched_template.batch_vertex_coordinates()
 
+        if point_cloud is not None:
+            batched_point_cloud = point_cloud.repeat([batch_size,1,1])
+            batched_verts.append(batched_point_cloud)
+
         predictions = net.predict(image, batched_verts)
+
+        if point_cloud is not None:
+            deformed_point_cloud = predictions["deformed_vertices"].pop()
+
         batched_template.update_batched_vertices(predictions["deformed_vertices"], detach=False)
         predictions["meshes"] = batched_template.meshes_list
 
@@ -124,16 +137,19 @@ def step_training_epoch(
     return running_training_loss, running_validation_loss
 
 
-def run_training_loop(net,
-                      optimizer,
-                      scheduler,
-                      dataloader,
-                      validation_dataset,
-                      template,
-                      loss_config,
-                      checkpointer,
-                      num_epochs,
-                      eval_frequency):
+def run_training_loop(
+        net,
+        optimizer,
+        scheduler,
+        dataloader,
+        validation_dataset,
+        template,
+        loss_config,
+        checkpointer,
+        num_epochs,
+        eval_frequency,
+        point_cloud
+):
     train_loss = defaultdict(list)
     validation_loss = defaultdict(list)
 
@@ -149,7 +165,8 @@ def run_training_loop(net,
             template,
             loss_config,
             checkpointer,
-            eval_frequency
+            eval_frequency,
+            point_cloud
         )
 
         for (k, v) in avg_train_loss.items():

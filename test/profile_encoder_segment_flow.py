@@ -5,13 +5,13 @@ import sys
 
 sys.path.append(os.getcwd())
 from src.segment_flow import *
-from src.utilities import batch_occupancy_map_from_vertices
 from src.integrator import IntegrateFlowDivRK4
 from src.loss import *
 from src.dataset import image_segmentation_mesh_dataloader
 from src.template import Template, BatchTemplate
 import yaml
 import time
+import pickle
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
@@ -84,8 +84,18 @@ dataloader = image_segmentation_mesh_dataloader(data_fn, shuffle=True, batch_siz
 template_fn = config["data"]["template_filename"]
 template = Template.from_vtk(template_fn, device=device)
 
+if "point_cloud_filename" in config["data"]:
+    point_cloud_fn = config["data"]["point_cloud_filename"]
+    print("\n\nLOADING POINT CLOUD AT : ", point_cloud_fn, "\n\n")
+    point_cloud = pickle.load(open(point_cloud_fn, "rb"))
+else:
+    point_cloud = None
+
 batched_template = BatchTemplate.from_single_template(template, batch_size)
 batched_verts = batched_template.batch_vertex_coordinates()
+if point_cloud is not None:
+    batched_point_cloud = point_cloud.repeat([batch_size, 1, 1])
+    batched_verts.append(batched_point_cloud)
 
 flow_div = FlowDiv(input_shape)
 cross_entropy_evaluator = CrossEntropyLoss(reduction="mean")
@@ -108,11 +118,10 @@ print("Time : ", stop - start)
 
 start = time.perf_counter()
 with torch.no_grad():
-    lt_deformed_vertices = net.pretrained_linear_transform(pre_encoding, batched_verts)
+    lt_deformed_vertices = net.pretrained_linear_transform(img, batched_verts)
 stop = time.perf_counter()
 print_memory_allocated("After linear transform :")
 print("Time : ", stop - start)
-
 
 start = time.perf_counter()
 encoding = net.encoder(pre_encoding)
@@ -120,13 +129,11 @@ stop = time.perf_counter()
 print_memory_allocated("After encoder :")
 print("Time : ", stop - start)
 
-
 start = time.perf_counter()
 segmentation = net.segment_decoder(encoding)
 stop = time.perf_counter()
 print_memory_allocated("After segmentation :")
 print("Time : ", stop - start)
-
 
 start = time.perf_counter()
 encoding = net.get_flow_decoder_input(encoding, lt_deformed_vertices, batch_size, net.input_size)
@@ -147,6 +154,9 @@ stop = time.perf_counter()
 print_memory_allocated("After integrating flow and div :")
 print("Time : ", stop - start)
 
+if point_cloud is not None:
+    _ = deformed_verts.pop()
+
 start = time.perf_counter()
 batched_template.update_batched_vertices(deformed_verts, detach=False)
 stop = time.perf_counter()
@@ -158,7 +168,6 @@ cross_entropy_loss = cross_entropy_evaluator(segmentation, gt_segmentation)
 stop = time.perf_counter()
 print_memory_allocated("After cross entropy loss :")
 print("Time : ", stop - start)
-
 
 start = time.perf_counter()
 chd, chn = average_chamfer_distance_between_meshes(batched_template.meshes_list, gt_meshes, 1)
@@ -179,7 +188,6 @@ normal_loss = average_normal_consistency_loss(batched_template.meshes_list)
 stop = time.perf_counter()
 print_memory_allocated("After geometric losses :")
 print("Time : ", stop - start)
-
 
 loss = chd + chn + divergence_loss + cross_entropy_loss + edge_loss + laplace_loss + normal_loss
 
