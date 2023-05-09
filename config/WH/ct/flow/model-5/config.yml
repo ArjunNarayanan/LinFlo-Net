@@ -11,7 +11,7 @@ train:
     batch_size: 1
     optimizer:
         lr: 5.e-5
-        weight_decay: 1.e-3
+        weight_decay: 5.e-5
     scheduler:
         factor: 0.9
         patience: 5
@@ -38,9 +38,9 @@ loss:
     norm_type: 1
     chamfer_distance: 1
     chamfer_normal: 0.05
-    divergence: 0.005
+    divergence: 0.01
     edge: 50
     normal: 5
     laplace: 10
-    cross_entropy: 0.05
-    dice: 0.05
+    cross_entropy: 0.1
+    dice: 0.1

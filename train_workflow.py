@@ -100,6 +100,8 @@ def step_training_epoch(
         loss.backward()
         optimizer.step()
 
+        del predictions
+
         for (k, v) in loss_components.items():
             running_training_loss[k] += v.item()
 

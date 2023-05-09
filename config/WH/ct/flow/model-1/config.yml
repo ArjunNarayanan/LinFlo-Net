@@ -18,7 +18,7 @@ train:
         min_lr: 1.e-6
 model:
     pretrained_encoder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/pretrained_encoder.pth
-    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct//flow/pretrained_linear_transform.pth
+    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/pretrained_linear_transform.pth
     encoder:
         input_shape: 128
         input_channels: 65

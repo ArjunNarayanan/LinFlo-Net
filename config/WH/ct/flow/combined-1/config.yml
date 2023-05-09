@@ -1,17 +1,11 @@
-# NOTES: Based on model-1
-#       Trained on pure CT data
-#       Increase weight decay slightly
-#       Remove dice and CE loss
-#       Reduce integration steps from 50 to 20
-#       Add point-cloud
-#       Use divergence loss 0.01
-#       Use normal loss 1
+# NOTES: Based on model-2
+#       Trained on combined train and validation data
 data:
-    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/ct/augment20/processed
+    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/combined/ct/
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
     template_filename: data/template/highres_template.vtp
     point_cloud_filename: data/template/lv_interior_torch.pkl
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/model-2
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/combined/flow/model-1
 train:
     num_epochs: 50
     batch_size: 1

@@ -1,16 +1,17 @@
-# NOTES: Based on ct model-3
+# NOTES: Based on ct model-2
 #       Trained on pure MR data with no inlets / outlets
 data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/train/augment20/processed
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/validation/processed
     template_filename: data/template/highres_template.vtp
+    point_cloud_filename: data/template/lv_interior_torch.pkl
     output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/flow/model-1
 train:
     num_epochs: 50
     batch_size: 1
     optimizer:
         lr: 1.e-4
-        weight_decay: 1.e-3
+        weight_decay: 1.e-4
     scheduler:
         factor: 0.9
         patience: 5
@@ -32,14 +33,14 @@ model:
         decoder_hidden_channels: 32
         output_channels: 8
     integrator:
-        num_steps: 5
+        num_steps: 20
 loss:
     norm_type: 1
     chamfer_distance: 1
     chamfer_normal: 0.05
-    divergence: 0.005
+    divergence: 0.01
     edge: 50
-    normal: 5
+    normal: 1
     laplace: 10
-    cross_entropy: 0.05
-    dice: 0.05
+    cross_entropy: 0
+    dice: 0
