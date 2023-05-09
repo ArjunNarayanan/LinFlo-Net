@@ -37,10 +37,10 @@ def relabel_dir(input_dir, old2new_labels, dtype, output_dir, extension=".nii.gz
     print("COMPLETED RELABELING ", len(filenames), " SEGMENTATIONS")
 
 
-input_dir = "output/WholeHeartData/trained_models/mr/flow/model-1/evaluation/test/mr/segmentation"
+input_dir = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test/resampled-segmentation"
 old2new_labels = {0: 0, 1: 205, 2: 420, 3: 500, 4: 550, 5: 600, 6: 820, 7: 850}
 dtype = "uint16"
-output_dir = "output/WholeHeartData/trained_models/mr/flow/model-1/evaluation/test/mr/relabeled"
+output_dir = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test/relabeled-segmentation"
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 relabel_dir(input_dir, old2new_labels, dtype, output_dir)

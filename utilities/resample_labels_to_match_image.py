@@ -8,10 +8,10 @@ if __name__ == '__main__':
     '''This script resample the segmentation to have consistent spacing, origin and dimension with the image data
     and updates the label ids. The filenames in the segmentation and image folders are assumed to match.
     '''
-    image_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/WholeHeartDataWithInlets/train/mr/image"
-    input_segmentation_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/WholeHeartDataWithInlets/train/mr/raw_labels"
-    output_segmentation_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/WholeHeartDataWithInlets/train/mr/label"
-    extension = ".gz"
+    image_dir = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test/image"
+    input_segmentation_dir = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test/segmentation"
+    output_segmentation_dir = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test/resampled-segmentation"
+    extension = ".nii.gz"
 
     if not os.path.isdir(output_segmentation_dir):
         os.makedirs(output_segmentation_dir)

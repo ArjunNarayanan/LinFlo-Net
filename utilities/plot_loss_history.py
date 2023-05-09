@@ -28,14 +28,18 @@ def plot_all_losses(train_df, validation_df, output_dir):
         plot_loss(train_loss, validation_loss, loss_name, outfile)
 
 
-root_dir = "output/WholeHeartData/trained_models/ct/flow/model-2"
+root_dir = "output/WholeHeartData/trained_models/ct/combined/flow/model-1"
+validation_loss_file = os.path.join(root_dir, "validation_loss.csv")
+train_loss_file = os.path.join(root_dir, "train_loss.csv")
+assert os.path.isdir(root_dir)
+assert os.path.isfile(validation_loss_file)
+assert os.path.isfile(train_loss_file)
 
 output_dir = os.path.join(root_dir, "loss_plots")
 if not os.path.isdir(output_dir):
     os.makedirs(output_dir)
 
-validation_loss_file = os.path.join(root_dir, "validation_loss.csv")
-train_loss_file = os.path.join(root_dir, "train_loss.csv")
+
 
 train_df = pd.read_csv(train_loss_file)
 validation_df = pd.read_csv(validation_loss_file)
