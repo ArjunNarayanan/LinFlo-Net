@@ -1,11 +1,11 @@
 # NOTES: Based on model-2
-#       Increase divergence loss to 0.05
+#       Trained on combined train and validation data
 data:
-    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/train/ct/augment20/processed
+    train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/combined/ct/
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
     template_filename: data/template/highres_template.vtp
     point_cloud_filename: data/template/lv_interior_torch.pkl
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/model-3
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/combined/flow/model-2
 train:
     num_epochs: 50
     batch_size: 1
@@ -19,7 +19,7 @@ train:
         min_lr: 1.e-6
 model:
     pretrained_encoder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/pretrained_encoder.pth
-    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct//flow/pretrained_linear_transform.pth
+    pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/pretrained_linear_transform.pth
     encoder:
         input_shape: 128
         input_channels: 65
@@ -37,8 +37,8 @@ model:
 loss:
     norm_type: 1
     chamfer_distance: 1
-    chamfer_normal: 0.25
-    divergence: 0.05
+    chamfer_normal: 0.05
+    divergence: 0.03
     edge: 50
     normal: 1
     laplace: 10
