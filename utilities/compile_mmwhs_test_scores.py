@@ -2,14 +2,14 @@ import pandas as pd
 import os
 import numpy as np
 
-input_folder = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test/dice"
-output_folder = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/cropped/mr/flow/model-1/evaluation/test"
+input_folder = "/Users/arjun/Documents/Research/SimCardio/Datasets/MMWHS_test/evaluation/MMWHS_evaluation_testdata_label_encrypt_1mm_forpublic/results/EvaluateResultsResample/segmentations"
+output_folder = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/ct/combined/flow/model-1/evaluation/test"
 
-modality = "mr"
+modality = "ct"
 all_scores = []
 all_samples = []
 
-indices = [18,31]
+indices = range(1,41)
 for idx in indices:
     filename = modality + "_" + "dice" + str(idx) + ".xls"
     input_file = os.path.join(input_folder, filename)

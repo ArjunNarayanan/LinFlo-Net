@@ -56,17 +56,17 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = get_config(args.config)
-    output_dir = config["output_dir"]
+    output_dir = config["files"]["out_dir"]
     make_output_dir(output_dir)
 
-    checkpoint_fn = config["checkpoint"]
+    checkpoint_fn = config["files"]["model"]
     checkpoint = torch.load(checkpoint_fn, map_location=torch.device("cpu"))
     net = checkpoint["model"]
 
-    template_fn = config["template"]
+    template_fn = config["files"]["template"]
     template = Template.from_vtk(template_fn)
 
-    dataset_fn = config["dataset"]
+    dataset_fn = config["files"]["root_dir"]
     dataset = ImageSegmentationMeshDataset(dataset_fn)
 
     write_all_predictions(net, dataset, template, output_dir)

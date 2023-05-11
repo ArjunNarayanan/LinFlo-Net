@@ -1,0 +1,5 @@
+files:
+  model: output/WholeHeartData/trained_models/ct/flow/model-2/best_model.pth
+  out_dir: output/WholeHeartData/trained_models/ct/flow/model-2/evaluation/lv
+  template: data/lv-template/LV-01.vtp
+  root_dir: /Users/arjun/Documents/Research/SimCardio/Datasets/WholeHeartData/validation/ct/processed/indexed

@@ -2,7 +2,8 @@ import torch
 import torch.nn.functional as func
 from torch.nn.modules.loss import _Loss
 import numpy as np
-from pytorch3d.loss import chamfer_distance, mesh_edge_loss, mesh_laplacian_smoothing, mesh_normal_consistency
+from pytorch3d.loss import mesh_edge_loss, mesh_laplacian_smoothing, mesh_normal_consistency
+from src.chamfer import chamfer_distance
 
 
 class SoftDiceLoss(_Loss):
