@@ -2,8 +2,8 @@ import pandas as pd
 import os
 import numpy as np
 
-input_folder = "/Users/arjun/Documents/Research/SimCardio/Datasets/MMWHS_test/evaluation/MMWHS_evaluation_testdata_label_encrypt_1mm_forpublic/results/EvaluateResultsResample/segmentations"
-output_folder = "/Users/arjun/Documents/Research/SimCardio/HeartFlow/output/WholeHeartData/trained_models/ct/combined/flow/model-1/evaluation/test"
+input_folder = "output/WholeHeart/ct/combined-4/evaluation/test/ct/dice"
+output_folder = "output/WholeHeart/ct/combined-4/evaluation/test/ct/"
 
 modality = "ct"
 all_scores = []
