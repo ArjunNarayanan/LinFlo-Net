@@ -102,7 +102,7 @@ def write_all_meshes(root_dir, extension, index, prediction, output_extension):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Predict meshes on ground truth images")
+    parser = argparse.ArgumentParser(description="Predict meshes on test images")
     parser.add_argument("-config", help="path to config file")
     args = parser.parse_args()
 

@@ -39,6 +39,8 @@ conda install -c bottler nvidiacub
 conda install pytorch3d -c pytorch3d
 ```
 
+You can find all the other dependencies in the system generated `requirements.txt` in the repository. You should be able to install these directly with `pip` after installing the above packages.
+
 ### Test that everything works
 
 First request a brief interactive session with a GPU,
@@ -67,3 +69,26 @@ loss = chamfer_distance(a, b)
 ```
 
 If everything runs without error, you are all set!
+
+
+## Using pre-trained model
+
+The pre-trained model takes as input a CT image in NIFTI format, a template mesh in VTP format and outputs a deformed mesh in VTP format.
+
+First, place your image data in a folder named `image`. Let the path to this folder be `/path/to/folder/image`. Make sure that the images have extension `.nii.gz` or `.nii`. Next, run the following command to build an index of the image dataset,
+
+```
+python utilities/prepare_test_data_csv.py -f /path/to/folder
+```
+
+Note that the argument to `-f` is the path to the **parent** directory of the `image` directory.
+
+After generating the index, it's time to execute the model.
+
+Use one of the config files for example `config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml`. Modify the path to the model, path to the image dataset, and the path to your output directory. Next, run the prediction script,
+
+```
+python utilities/predict_test_meshes.py -config /path/to/config/file
+```
+
+The script will generate output meshes and segmentations for each input image file.

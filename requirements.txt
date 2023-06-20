@@ -1,0 +1,54 @@
+aiohttp==3.8.1
+aiosignal==1.2.0
+async-timeout==4.0.2
+asynctest==0.13.0
+attrs==22.1.0
+Bottleneck @ file:///opt/conda/conda-bld/bottleneck_1657175564434/work
+brotlipy==0.7.0
+certifi @ file:///opt/conda/conda-bld/certifi_1655968806487/work/certifi
+cffi @ file:///tmp/abs_98z5h56wf8/croots/recipe/cffi_1659598650955/work
+charset-normalizer @ file:///tmp/build/80754af9/charset-normalizer_1630003229654/work
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1655412516417/work
+cryptography @ file:///tmp/build/80754af9/cryptography_1652083456434/work
+cycler==0.11.0
+fonttools==4.37.1
+frozenlist==1.3.1
+fvcore==0.1.5.post20210915
+idna @ file:///tmp/build/80754af9/idna_1637925883363/work
+iopath==0.1.9
+kiwisolver==1.4.4
+matplotlib==3.5.3
+mkl-fft==1.3.1
+mkl-random @ file:///tmp/build/80754af9/mkl_random_1626179032232/work
+mkl-service==2.4.0
+mpi4py==3.1.4
+multidict==6.0.2
+numexpr @ file:///opt/conda/conda-bld/numexpr_1656940300424/work
+numpy @ file:///opt/conda/conda-bld/numpy_and_numpy_base_1653915516269/work
+packaging @ file:///tmp/build/80754af9/packaging_1637314298585/work
+pandas==1.3.5
+Pillow==9.2.0
+portalocker @ file:///home/conda/feedstock_root/build_artifacts/portalocker_1657463953153/work
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+pyOpenSSL @ file:///opt/conda/conda-bld/pyopenssl_1643788558760/work
+pyparsing @ file:///opt/conda/conda-bld/pyparsing_1661452539315/work
+PySocks @ file:///tmp/build/80754af9/pysocks_1594394576006/work
+python-dateutil @ file:///tmp/build/80754af9/python-dateutil_1626374649649/work
+pytorch3d==0.7.0
+pytz @ file:///opt/conda/conda-bld/pytz_1654762638606/work
+PyYAML @ file:///home/conda/feedstock_root/build_artifacts/pyyaml_1648757092905/work
+requests @ file:///opt/conda/conda-bld/requests_1657734628632/work
+SimpleITK==2.2.0
+six @ file:///tmp/build/80754af9/six_1644875935023/work
+tabulate @ file:///home/conda/feedstock_root/build_artifacts/tabulate_1655900837660/work
+termcolor @ file:///home/conda/feedstock_root/build_artifacts/termcolor_1657118200573/work
+torch==1.12.1
+torchaudio==0.12.1
+torchvision==0.13.1
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1662214488106/work
+typing_extensions @ file:///tmp/abs_ben9emwtky/croots/recipe/typing_extensions_1659638822008/work
+urllib3 @ file:///tmp/abs_5dhwnz6atv/croots/recipe/urllib3_1659110457909/work
+vtk==9.1.0
+wslink==1.8.2
+yacs @ file:///home/conda/feedstock_root/build_artifacts/yacs_1645705974477/work
+yarl==1.8.1
