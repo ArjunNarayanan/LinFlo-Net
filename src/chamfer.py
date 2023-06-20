@@ -175,6 +175,7 @@ def chamfer_distance(
         x_normals_near = knn_gather(y_normals, x_nn.idx, y_lengths)[..., 0, :]
         y_normals_near = knn_gather(x_normals, y_nn.idx, x_lengths)[..., 0, :]
 
+        # print("USING CUSTOM CHAMFER NORMAL")
         cham_norm_x = 1 - F.cosine_similarity(x_normals, x_normals_near, dim=2, eps=1e-6)
         cham_norm_y = 1 - F.cosine_similarity(y_normals, y_normals_near, dim=2, eps=1e-6)
 

@@ -1,6 +1,5 @@
 # NOTES: Based on model-1
-#       Removing divergence loss
-#       Increasing chamfer normal loss
+#       Increase chamfer normal weight to 0.15
 data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/combined/ct/
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
@@ -33,14 +32,14 @@ model:
         decoder_hidden_channels: 32
         output_channels: 8
     integrator:
-        num_steps: 20
+        num_steps: 50
 loss:
     norm_type: 1
     chamfer_distance: 1
-    chamfer_normal: 0.5
+    chamfer_normal: 0.15
     divergence: 0
     edge: 50
-    normal: 1
+    normal: 5
     laplace: 10
     cross_entropy: 0
     dice: 0

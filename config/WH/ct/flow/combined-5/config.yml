@@ -1,22 +1,22 @@
-# NOTES:
-#       Trained on combined train and validation data
+# NOTES: CONTINUE TRAINING COMBINED-4
 data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/combined/ct/
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/combined/flow/model-1
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/combined/flow/model-5
 train:
     num_epochs: 50
     batch_size: 1
     optimizer:
         lr: 5.e-5
-        weight_decay: 5.e-5
+        weight_decay: 1.e-4
     scheduler:
         factor: 0.9
         patience: 5
         threshold: 1.e-4
         min_lr: 1.e-6
 model:
+    checkpoint: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/combined/flow/model-4/best_model.pth
     pretrained_encoder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/pretrained_encoder.pth
     pretrained_linear_transform: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/flow/pretrained_linear_transform.pth
     encoder:
@@ -38,8 +38,8 @@ loss:
     chamfer_distance: 1
     chamfer_normal: 0.15
     divergence: 0
-    edge: 20
-    normal: 0.5
-    laplace: 5
+    edge: 50
+    normal: 1
+    laplace: 10
     cross_entropy: 0
     dice: 0

@@ -75,6 +75,13 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(net.parameters(), **optimizer_config)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, "min", **config["train"]["scheduler"])
 
+    if "checkpoint" in config["model"]:
+        print("LOADING CHECKPOINT AT : ", config["model"]["checkpoint"])
+        data = torch.load(config["model"]["checkpoint"], map_location=device)
+        net.load_state_dict(data["model"].state_dict())
+        optimizer.load_state_dict(data["optimizer"].state_dict())
+        del data
+
     default_output_dir = os.path.dirname(config_fn)
     output_dir = config["data"].get("output_folder", default_output_dir)
     print("WRITING OUTPUT TO : ", output_dir, "\n\n")
