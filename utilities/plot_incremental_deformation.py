@@ -30,14 +30,14 @@ def write_deformation_history(sample_name, num_samples=20):
         vtu.write_vtk_polydata(vtk_template, out_filepath)
 
 
-root_dir = "output/WholeHeartData/trained_models/ct/combined/flow/model-2/"
+root_dir = "output/WholeHeart/ct/combined-4/"
 # root_dir = "output/WholeHeartData/trained_models/mr/linear_transform/"
-dataset_folder = "/Users/arjun/Documents/Research/SimCardio/Datasets/WholeHeartData/validation/ct/processed/indexed/data"
-template_file = "data/lv-template/LV-01.vtp"
+dataset_folder = "/Users/arjunnarayanan/Documents/Research/Simcardio/Datasets/WholeHeartData/validation/ct/processed/indexed/data"
+template_file = "data/template/highres_template.vtp"
 
-output_root_dir = os.path.join(root_dir, "lv-evaluation", "incremental")
+output_root_dir = os.path.join(root_dir, "evaluation", "incremental")
 model_file = os.path.join(root_dir, "best_model.pth")
-sample_name = "sample12"
+sample_name = "sample08"
 
 data = torch.load(model_file, map_location=torch.device("cpu"))
 model = data["model"]
