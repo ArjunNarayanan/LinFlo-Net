@@ -1,11 +1,13 @@
 import os
 import sys
 import glob
+
 sys.path.append(os.getcwd())
 import vtk_utils.vtk_utils as vtu
 import SimpleITK as sitk
 import numpy as np
 import argparse
+
 
 def generate_mesh(vtk_seg, decimation_ratio=0.8):
     seg_ids = np.unique(vtu.vtk_to_numpy(vtk_seg.GetPointData().GetScalars()))
@@ -27,6 +29,7 @@ def generate_mesh(vtk_seg, decimation_ratio=0.8):
     mesh_all.GetPointData().AddArray(r_id_array)
     return mesh_all
 
+
 def generate_mesh_from_seg(seg_fn):
     seg = sitk.ReadImage(seg_fn)
     seg_arr = sitk.GetArrayFromImage(seg)
@@ -37,6 +40,7 @@ def generate_mesh_from_seg(seg_fn):
     vtk_seg = vtu.exportSitk2VTK(seg_new)[0]
     mesh = generate_mesh(vtk_seg)
     return mesh
+
 
 def write_all_meshes(filenames, output_dir):
     for seg_fn in filenames:
@@ -55,7 +59,7 @@ if __name__ == "__main__":
     parser.add_argument("-e", help="Input file extension", default=".nii.gz")
     args = parser.parse_args()
 
-    input_folder = args.f 
+    input_folder = args.f
     output_folder = args.o
     extension = args.e
 
