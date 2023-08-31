@@ -66,6 +66,8 @@ if __name__ == "__main__":
                                                              loss_config,
                                                              save_best_model,
                                                              num_epochs,
-                                                             eval_frequency)
+                                                             eval_frequency,
+                                                             point_cloud=None
+                                                             )
 
     print("\n\nCOMPLETED TRAINING MODEL")

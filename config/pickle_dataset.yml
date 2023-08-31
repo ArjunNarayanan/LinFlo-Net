@@ -1,3 +1,3 @@
-input_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/augment20/processed
-output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/augment20/processed/data
+input_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/combined
+output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/cropped/mr/combined/data
 seg_labels: [0, 205, 420, 500, 550, 600, 820, 850]
