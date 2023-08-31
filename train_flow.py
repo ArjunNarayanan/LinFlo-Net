@@ -7,14 +7,19 @@ from src.io_utils import SaveBestModel, load_yaml_config
 from src.template import Template
 import argparse
 import train_workflow as workflow
+from torch.nn import Identity
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
 def initialize_model(model_config):
-    pretrained_linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
-    encoder = Unet.from_dict(model_config["encoder"])
+    lt_model_path = model_config["pretrained_linear_transform"]
+    if lt_model_path is None:
+        pretrained_linear_transform = Identity()
+    else:
+        pretrained_linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
 
+    encoder = Unet.from_dict(model_config["encoder"])
     decoder_input_channels = model_config["encoder"]["uparm_channels"][-1]
     decoder_hidden_channels = model_config["segment"]["hidden_channels"]
     decoder_output_channels = model_config["segment"]["output_channels"]
