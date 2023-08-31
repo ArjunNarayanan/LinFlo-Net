@@ -173,6 +173,8 @@ if __name__ == "__main__":
     batch_size = config["train"]["batch_size"]
 
     train_dataloader = image_segmentation_mesh_dataloader(train_folder, shuffle=True, batch_size=batch_size)
+    num_train_data = len(train_dataloader) * batch_size
+    print("\nTRAIN DATASET SIZE : ", num_train_data)
 
     validation_folder = config["data"]["validation_folder"]
     validation_dataset = ImageSegmentationMeshDataset(validation_folder)
