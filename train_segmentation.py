@@ -178,6 +178,8 @@ if __name__ == "__main__":
 
     validation_folder = config["data"]["validation_folder"]
     validation_dataset = ImageSegmentationMeshDataset(validation_folder)
+    num_validation_data = len(validation_dataset)
+    print("\nVALIDATION DATASET SIZE : ", num_validation_data)
 
     net_config = config["model"]
     net = UnetSegment.from_dict(net_config)
