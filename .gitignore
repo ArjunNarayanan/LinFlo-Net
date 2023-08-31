@@ -6,3 +6,10 @@ test/output/*
 *.DS_Store
 bash_scripts/*
 job_scripts/*
+*.csv
+*.pth
+*.vtp
+*.vti
+*.png
+*.gz
+*.xls

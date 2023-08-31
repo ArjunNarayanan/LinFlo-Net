@@ -56,7 +56,13 @@ class ImageSegmentationMeshDataset(Dataset):
         return data
 
 
-def image_segmentation_mesh_dataloader(root_dir, batch_size=1, shuffle=True):
+def image_segmentation_mesh_dataloader(root_dir, batch_size=1, shuffle=True, num_workers = 0):
     dataset = ImageSegmentationMeshDataset(root_dir)
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_fn)
+    dataloader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=shuffle,
+        collate_fn=collate_fn,
+        num_workers=num_workers
+    )
     return dataloader
