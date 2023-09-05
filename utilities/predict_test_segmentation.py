@@ -38,6 +38,7 @@ class ProcessedImage:
 
 
 def predict_segmentation(model, image):
+    image = image.to(device)
     with torch.no_grad():
         seg = model.get_segmentation(image)
 
@@ -88,7 +89,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     config = load_yaml_config(args.config)
-    input_dir = config["input_dir"]
+    input_dir = config["dataset"]
     model_fn = config["model"]
     output_dir = config["output_dir"]
     image_size = config["normalized_image_size"]
@@ -97,8 +98,12 @@ if __name__ == "__main__":
     if not os.path.isdir(output_dir):
         os.makedirs(output_dir)
 
-    model_data = torch.load(model_fn, map_location=torch.device("cpu"))
+    print("Loading model at : ", model_fn)
+    model_data = torch.load(model_fn, map_location=device)
     model = model_data["model"]
+    model.to(device)
+    model.eval()
+    print("Successfully loaded model")
 
     index_fn = os.path.join(input_dir, "index.csv")
     assert os.path.isfile(index_fn)
