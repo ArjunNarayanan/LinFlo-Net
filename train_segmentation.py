@@ -49,7 +49,7 @@ def step_training_epoch(
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
 
-    assert 0 < eval_frequency < 1.0
+    assert 0 < eval_frequency <= 1.0
 
     running_training_loss = defaultdict(float)
     running_validation_loss = defaultdict(float)

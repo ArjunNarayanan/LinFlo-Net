@@ -7,7 +7,7 @@ from src.io_utils import SaveBestModel, load_yaml_config
 from src.template import Template
 import argparse
 import train_workflow as workflow
-from torch.nn import Identity
+from src.linear_transform import IdentityLinearTransform
 
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
@@ -15,18 +15,18 @@ device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 def initialize_model(model_config):
     lt_model_path = model_config["pretrained_linear_transform"]
     if lt_model_path is None:
-        pretrained_linear_transform = Identity()
+        pretrained_linear_transform = IdentityLinearTransform()
     else:
         pretrained_linear_transform = torch.load(model_config["pretrained_linear_transform"], map_location=device)
 
     encoder = Unet.from_dict(model_config["encoder"])
     decoder_input_channels = model_config["encoder"]["uparm_channels"][-1]
-    decoder_hidden_channels = model_config["segment"]["hidden_channels"]
+    decoder_hidden_channels = model_config["segment"]["decoder_hidden_channels"]
     decoder_output_channels = model_config["segment"]["output_channels"]
     segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
 
     flow_clip_value = model_config["flow"]["clip"]
-    decoder_hidden_channels = model_config["flow"]["hidden_channels"]
+    decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
     flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
 
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
@@ -51,9 +51,13 @@ if __name__ == "__main__":
     batch_size = config["train"]["batch_size"]
 
     train_dataloader = image_segmentation_mesh_dataloader(train_folder, batch_size=batch_size, shuffle=True)
+    num_train_data = len(train_dataloader) * batch_size
+    print("\nTRAIN DATASET SIZE : ", num_train_data)
 
     validation_folder = config["data"]["validation_folder"]
     validation_dataset = ImageSegmentationMeshDataset(validation_folder)
+    num_validation_data = len(validation_dataset)
+    print("\nVALIDATION DATASET SIZE : ", num_validation_data)
 
     tmplt_fn = config["data"]["template_filename"]
     template = Template.from_vtk(tmplt_fn, device=device)
@@ -91,6 +95,8 @@ if __name__ == "__main__":
                                                              loss_config,
                                                              save_best_model,
                                                              num_epochs,
-                                                             eval_frequency)
+                                                             eval_frequency,
+                                                             point_cloud=None,
+                                                             )
 
     print("\n\nCOMPLETED TRAINING MODEL")

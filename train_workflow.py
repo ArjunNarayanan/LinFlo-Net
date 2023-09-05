@@ -54,7 +54,7 @@ def step_training_epoch(
 ):
     assert len(dataloader) > 0
     assert len(validation_dataset) > 0
-    assert 0 < eval_frequency < 1
+    assert 0 < eval_frequency <= 1
     if point_cloud is not None:
         assert isinstance(point_cloud, torch.Tensor)
         assert point_cloud.ndim == 2
