@@ -1,0 +1,5 @@
+dataset: /global/scratch/users/arjunnarayanan/MMWHS_test/ct
+model: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct-mr-cropped/segmentation/augment-20/best_model.pth
+output_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct-mr-cropped/segmentation/augment-20/test/ct
+normalized_image_size: 128
+modality: ct
