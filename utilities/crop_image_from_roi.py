@@ -16,6 +16,8 @@ def create_output_folders(folder):
 
 def crop_and_write(file_idx):
     file_name = dataframe.loc[file_idx, "sample_name"]
+    print("Processing file : ", file_name)
+
     file_path = os.path.join(input_dir, file_name + ".nii.gz")
     assert os.path.isfile(file_path)
     img = sitk.ReadImage(file_path)
@@ -31,7 +33,7 @@ def crop_and_write(file_idx):
                     lower_bound[2]:upper_bound[2]]
 
     output_path = os.path.join(output_dir, file_name + ".nii.gz")
-    print("Writing output at : ", output_path)
+    # print("Writing output at : ", output_path)
     sitk.WriteImage(cropped_image, output_path)
 
 
@@ -43,19 +45,19 @@ def crop_all_images_segmentations():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Crop images and segmentations based on ROI")
-    parser.add_argument("-f", help="Input folder", required=True)
-    parser.add_argument("-c", help="Path to CSV file", required=True)
-    parser.add_argument("-o", help="Output folder", required=True)
+    parser.add_argument("-input", help="Input folder", required=True)
+    parser.add_argument("-csv", help="Path to CSV file", required=True)
+    parser.add_argument("-output", help="Output folder", required=True)
 
     args = parser.parse_args()
 
-    input_dir = args.f
+    input_dir = args.input
     assert os.path.isdir(input_dir)
 
-    output_dir = args.o
+    output_dir = args.output
     create_output_folders(output_dir)
 
-    index_file = args.c
+    index_file = args.csv
     assert os.path.isfile(index_file)
     dataframe = pd.read_csv(index_file)
 

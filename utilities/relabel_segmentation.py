@@ -1,6 +1,7 @@
 import SimpleITK as sitk
 import os
 import glob
+import argparse
 
 
 def relabel_segmentation_array(segmentation_array, old2new_labels):
@@ -37,10 +38,18 @@ def relabel_dir(input_dir, old2new_labels, dtype, output_dir, extension=".nii.gz
     print("COMPLETED RELABELING ", len(filenames), " SEGMENTATIONS")
 
 
-input_dir = "output/WholeHeart/ct/combined-4/evaluation/test/ct/segmentation/"
-old2new_labels = {0: 0, 1: 205, 2: 420, 3: 500, 4: 550, 5: 600, 6: 820, 7: 850}
-dtype = "uint16"
-output_dir = "output/WholeHeart/ct/combined-4/evaluation/test/ct/relabeled/"
-if not os.path.isdir(output_dir):
-    os.makedirs(output_dir)
-relabel_dir(input_dir, old2new_labels, dtype, output_dir)
+if __name__=="__main__":
+    parser = argparse.ArgumentParser(description="Relabel segmentation indices to specified values")
+    parser.add_argument("-input", help="Input directory", required=True)
+    parser.add_argument("-output", help="Output directory", required=True)
+    parser.add_argument("-ext", help="File extension", default=".nii.gz")
+    args = parser.parse_args()
+
+    input_dir = args.input
+    output_dir = args.output
+    old2new_labels = {0: 0, 1: 205, 2: 420, 3: 500, 4: 550, 5: 600, 6: 820, 7: 850}
+    dtype = "uint16"
+    if not os.path.isdir(output_dir):
+        os.makedirs(output_dir)
+
+    relabel_dir(input_dir, old2new_labels, dtype, output_dir, extension=args.ext)
