@@ -34,7 +34,7 @@ def compile_scores():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compile MMWHS test dice scores into one file")
     parser.add_argument("-input", help="Input folder", required=True)
-    parser.add_argument("-output", help="Output folder", default = None)
+    parser.add_argument("-output", help="Output folder", default=None)
     parser.add_argument("-modality", help="Modality", required=True)
     args = parser.parse_args()
 
