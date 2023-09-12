@@ -1,0 +1,11 @@
+info:
+  input_size: [128, 128, 128]
+  num_mesh: 7
+files:
+  extension: .nii.gz
+  model: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/linear_transform/augment-20/best_model.pth
+  template: data/template/highres_template.vtp
+  root_dir: /global/scratch/users/arjunnarayanan/MMWHS_test/ct
+  output_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/linear_transform/augment-20/MMWHS-test
+  output_extension: .nii.gz
+modality: ct
