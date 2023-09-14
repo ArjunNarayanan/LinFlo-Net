@@ -12,7 +12,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Resample segmentation into original image space")
     parser.add_argument("-image", help="path to image folder", required=True)
     parser.add_argument("-segmentation", help="path to segmentation folder", required=True)
-    parser.add_argument("-output", help="path to output folder", required=True)
+    parser.add_argument("-output", help="path to output folder", default=None)
     parser.add_argument("-ext", help="file extension", default=".nii.gz")
     args = parser.parse_args()
 
@@ -20,6 +20,11 @@ if __name__ == '__main__':
     input_segmentation_dir = args.segmentation
     output_segmentation_dir = args.output
     extension = args.ext
+
+    if output_segmentation_dir is None:
+        base_dir = os.path.dirname(input_segmentation_dir)
+        foldername = "resampled-" + os.path.basename(input_segmentation_dir)
+        output_segmentation_dir = os.path.join(base_dir, foldername)
 
     if not os.path.isdir(output_segmentation_dir):
         os.makedirs(output_segmentation_dir)

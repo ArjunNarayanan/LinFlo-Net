@@ -41,12 +41,18 @@ def relabel_dir(input_dir, old2new_labels, dtype, output_dir, extension=".nii.gz
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description="Relabel segmentation indices to specified values")
     parser.add_argument("-input", help="Input directory", required=True)
-    parser.add_argument("-output", help="Output directory", required=True)
+    parser.add_argument("-output", help="Output directory", default=None)
     parser.add_argument("-ext", help="File extension", default=".nii.gz")
     args = parser.parse_args()
 
     input_dir = args.input
     output_dir = args.output
+
+    if output_dir is None:
+        base_dir = os.path.dirname(input_dir)
+        foldername = "relabeled-" + os.path.basename(input_dir)
+        output_dir = os.path.join(base_dir, foldername)
+
     old2new_labels = {0: 0, 1: 205, 2: 420, 3: 500, 4: 550, 5: 600, 6: 820, 7: 850}
     dtype = "uint16"
     if not os.path.isdir(output_dir):
