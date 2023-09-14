@@ -1,7 +1,7 @@
 data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/combined/ct-cropped-mr/
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct-cropped-mr/
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct-mr-cropped/segmentation/combined-1
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct-mr-cropped/segmentation/augment-20
 train:
     num_epochs: 50
     batch_size: 1
