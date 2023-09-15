@@ -1,5 +1,5 @@
 dataset: /global/scratch/users/arjunnarayanan/MMWHS_test/mr-perturbed-crop
 model: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/segmentation/augment-20/best_model.pth
-output_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/segmentation/augment-20/test-mr-perturbed-crop
+output_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/cropped/mr/segmentation/augment-20/MMWHS-test
 normalized_image_size: 128
 modality: mr
