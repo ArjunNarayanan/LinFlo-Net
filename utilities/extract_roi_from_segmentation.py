@@ -47,6 +47,7 @@ def get_perturbed_bounds_and_size(seg_fn, margin=range(30, 50)):
 
 
 def get_all_bounds(filenames):
+    print("Computing image bounds:")
     bounds = []
     for fn in filenames:
         seg = sitk.ReadImage(fn)
@@ -57,17 +58,29 @@ def get_all_bounds(filenames):
     return bounds
 
 
-def get_all_perturbed_bounds_and_size(filenames):
+def get_all_perturbed_bounds_and_size(filenames, lower_margin=30, upper_margin=50):
+    print("Computing cropped boundaries:")
+    margin = range(lower_margin, upper_margin)
     bounds = []
     sizes = []
     for fn in filenames:
-        lower, upper, size = get_perturbed_bounds_and_size(fn)
+        lower, upper, size = get_perturbed_bounds_and_size(fn, margin)
         _bounds = np.array([lower, upper]).T.ravel()
         bounds.append(_bounds)
         sizes.append(size)
     bounds = np.array(bounds)
     sizes = np.array(sizes)
     return bounds, sizes
+
+
+def get_all_spacings(filenames):
+    spacings = []
+    for fn in filenames:
+        img = sitk.ReadImage(fn)
+        spacings.append(img.GetSpacing())
+
+    spacings = np.array(spacings)
+    return spacings
 
 
 def get_max_size(filename):
@@ -106,17 +119,22 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compute region of interest from segmentations")
     parser.add_argument("-f", help="folder to process")
     parser.add_argument("-o", default="crop_bounds.csv", help="output csv file")
+    parser.add_argument("-lmargin", default=30, help="minimum margin to add", type=int)
+    parser.add_argument("-umargin", default=49, help="maximum margin to add", type=int)
     args = parser.parse_args()
 
     base_dir = args.f
-    root_dir = os.path.join(base_dir, "label")
+    root_dir = base_dir
     assert os.path.isdir(root_dir)
     filepaths = glob.glob(os.path.join(root_dir, "*.nii.gz"))
     filepaths.sort()
     print("Found ", len(filepaths), " files")
+    lower_margin = args.lmargin
+    upper_margin = args.umargin
 
-    perturbed_bounds, sizes = get_all_perturbed_bounds_and_size(filepaths)
+    perturbed_bounds, sizes = get_all_perturbed_bounds_and_size(filepaths, lower_margin, upper_margin+1)
     bounds = get_all_bounds(filepaths)
+    spacings = get_all_spacings(filepaths)
 
     dx = bounds[:, 1] - bounds[:, 0]
     dy = bounds[:, 3] - bounds[:, 2]
@@ -127,16 +145,24 @@ if __name__ == "__main__":
 
     df = pd.DataFrame({"sample_name": index})
     df[["X0", "X1", "Y0", "Y1", "Z0", "Z1"]] = perturbed_bounds
+    df[["XS", "YS", "ZS"]] = spacings
 
     cropped_volume = dx * dy * dz
     original_volume = sizes.prod(axis=1)
-    vol_ratio = cropped_volume/original_volume
+    vol_ratio = cropped_volume / original_volume
     df["volume_ratio"] = vol_ratio
 
-    df = df[["sample_name", "X0", "X1", "Y0", "Y1", "Z0", "Z1", "volume_ratio"]]
+    df = df[["sample_name", "X0", "X1", "XS", "Y0", "Y1", "YS", "Z0", "Z1", "ZS", "volume_ratio"]]
 
-    out_dir = base_dir
+    out_dir = os.path.dirname(base_dir)
     out_file = args.o
     out_file_path = os.path.join(out_dir, out_file)
     print("Writing bounds data to ", out_file_path)
-    df.to_csv(out_file_path, index=False)
+
+    out_ext = os.path.splitext(out_file_path)[1]
+    if out_ext == ".csv":
+        df.to_csv(out_file_path, index=False)
+    elif out_ext == ".xlsx":
+        df.to_excel(out_file_path, index=False)
+    else:
+        raise ValueError("Unexpected extension type ", out_ext)

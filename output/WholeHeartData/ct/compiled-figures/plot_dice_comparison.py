@@ -123,7 +123,7 @@ ax.legend(
 
 
 xtick_positions = [2.5 + k * step for k in range(7)]
-ax.set_xticks(xtick_positions, ["Myo", "LV", "RV", "LA", "RA", "Ao", "PA"])
+ax.set_xticks(xtick_positions, ["Myocardium", "Left Ventricle", "Right Ventricle", "Left Atrium", "Right Atrium", "Aorta", "Pulmonary Artery"])
 ax.set_ylabel("Test Dice Score")
 fig.tight_layout()
 fig.savefig(os.path.join(base_dir, "dice_comparison.pdf"))
