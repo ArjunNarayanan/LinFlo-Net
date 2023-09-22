@@ -1,14 +1,11 @@
 # NOTES: Based on model-1
-#       Increased chamfer normal loss weight to 1
-#       Increased edge weight to 100
-#       Increased normal weight to 5
-
+#       Reduced flow clip norm to 0.015
 
 data:
     train_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/combined/ct/
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
     template_filename: data/template/highres_template.vtp
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/encoder-LT-flow/model-2
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/encoder-LT-flow/model-4
 train:
     num_epochs: 50
     batch_size: 1
@@ -31,7 +28,7 @@ model:
         uparm_channels: [256, 128, 64, 32, 32]
     flow:
         decoder_hidden_channels: 32
-        clip: 0.05
+        clip: 0.015
     segment:
         decoder_hidden_channels: 32
         output_channels: 8
@@ -40,10 +37,10 @@ model:
 loss:
     norm_type: 1
     chamfer_distance: 1
-    chamfer_normal: 1
+    chamfer_normal: 0.15
     divergence: 0
-    edge: 100
-    normal: 5
+    edge: 50
+    normal: 1
     laplace: 10
     cross_entropy: 0
     dice: 0

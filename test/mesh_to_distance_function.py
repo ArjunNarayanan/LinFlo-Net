@@ -1,12 +1,18 @@
 import pytorch3d.structures
 import torch
-from src.template import Template
+import os
+import sys
 import pytorch3d
 from pytorch3d.loss import point_mesh_face_distance
 from pytorch3d.loss.point_mesh_distance import point_face_distance, _DEFAULT_MIN_TRIANGLE_AREA
 from pytorch3d.structures import Pointclouds, Meshes
 import SimpleITK as sitk
 
+sys.path.append(os.getcwd())
+from src.template import Template
+
+
+device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 def make_3d_grid(num_voxels, start=-1.0, stop=1.0):
     """Generate a 3D grid of points corresponding to normalized voxel coordinates
@@ -38,6 +44,8 @@ def distance_to_face(
         pcls: Pointclouds,
         min_triangle_area: float = _DEFAULT_MIN_TRIANGLE_AREA,
 ):
+    print("Computing distance:")
+
     if len(meshes) != len(pcls):
         raise ValueError("meshes and pointclouds must be equal sized batches")
     N = len(meshes)
@@ -69,17 +77,18 @@ def distance_to_face(
 
 if __name__ == "__main__":
     mesh_fn = "data/template/highres_template.vtp"
-    grid_size = 8
+    grid_size = 128
 
-    template = Template.from_vtk(mesh_fn)
+    template = Template.from_vtk(mesh_fn).to(device)
     mesh = pytorch3d.structures.join_meshes_as_scene(template)
 
     grid = make_3d_grid(grid_size, start=0, stop=1)
-    grid = grid.reshape([-1, 3])
+    grid = grid.reshape([-1, 3]).to(device)
 
-    point_cloud = Pointclouds([grid])
+    point_cloud = Pointclouds([grid]).to(device)
+
     dists = distance_to_face(mesh, point_cloud)
-    dists = dists.reshape(3 * [grid_size])
+    dists = dists.reshape(3 * [grid_size]).cpu().numpy()
 
     img = sitk.GetImageFromArray(dists)
     img.SetSpacing(3 * [1 / grid_size])
