@@ -60,6 +60,7 @@ if __name__ == "__main__":
     template = Template.from_vtk(tmplt_fn, device=device)
     if "point_cloud_filename" in config["data"]:
         point_cloud_fn = config["data"]["point_cloud_filename"]
+        print("\n\nLoading point cloud at ", point_cloud_fn, "\n\n")
         point_cloud = pickle.load(open(point_cloud_fn, "rb"))
     else:
         point_cloud = None
