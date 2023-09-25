@@ -7,6 +7,7 @@ test/output/*
 bash_scripts/*
 job_scripts/*
 *.csv
+*.xlsx
 *.pth
 *.vtp
 *.vti
