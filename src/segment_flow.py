@@ -282,11 +282,12 @@ class UDFEncodeLinearTransformSegmentFlow(nn.Module):
             rotate
         )
 
-        pre_encoding = torch.cat([pre_encoding, transformed_distance_map], dim=1)
+        pre_encoding = torch.cat([image, pre_encoding], dim=1)
         encoding = self.encoder(pre_encoding)
         predicted_segmentation = self.segment_decoder(encoding)
 
-        flow_field = self.flow_decoder(encoding)
+        flow_encoding = torch.cat([encoding, transformed_distance_map], dim=1)
+        flow_field = self.flow_decoder(flow_encoding)
         flow_and_div = self.flow_div.get_flow_div(flow_field)
         deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
 
