@@ -8,7 +8,7 @@ from collections import defaultdict
 device = torch.device('cuda:' + str(0) if torch.cuda.is_available() else 'cpu')
 
 
-def evaluate_model(net, dataset, template, loss_evaluators, loss_config):
+def evaluate_model(net, dataset, template, template_distance_map, loss_evaluators, loss_config):
     assert len(dataset) > 0.0
     running_validation_loss = defaultdict(float)
 
@@ -22,7 +22,8 @@ def evaluate_model(net, dataset, template, loss_evaluators, loss_config):
         batched_template = BatchTemplate.from_single_template(template, batch_size)
         batched_verts = batched_template.batch_vertex_coordinates()
         with torch.no_grad():
-            predictions = net.predict(image, batched_verts)
+            predictions = net.predict(image, batched_verts, template_distance_map)
+
         batched_template.update_batched_vertices(predictions["deformed_vertices"], detach=False)
         predictions["meshes"] = batched_template.meshes_list
 
@@ -113,7 +114,14 @@ def step_training_epoch(
         if (idx + 1) % eval_every == 0:
             print("\n\n\tEVALUATING MODEL")
             eval_counter += 1
-            validation_loss_components = evaluate_model(net, validation_dataset, template, loss_evaluators, loss_config)
+            validation_loss_components = evaluate_model(
+                net, 
+                validation_dataset, 
+                template, 
+                template_distance_map, 
+                loss_evaluators, 
+                loss_config
+            )
             out_str = "\t\t" + loss2str(validation_loss_components) + "\n\n"
             print(out_str)
             total_validation_loss = validation_loss_components["total"]
