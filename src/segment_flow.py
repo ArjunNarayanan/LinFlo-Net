@@ -123,14 +123,17 @@ def get_occupancy(vertices, batch_size, input_shape):
 
 
 class EncodeLinearTransformSegmentFlow(nn.Module):
-    def __init__(self,
-                 input_size,
-                 pretrained_encoder,
-                 pretrained_linear_transform,
-                 encoder,
-                 segment_decoder,
-                 flow_decoder,
-                 integrator):
+    def __init__(
+            self,
+            input_size,
+            pretrained_encoder,
+            pretrained_linear_transform,
+            encoder,
+            segment_decoder,
+            flow_decoder,
+            integrator
+    ):
+
         super().__init__()
 
         self.input_size = input_size
