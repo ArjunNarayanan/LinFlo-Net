@@ -11,6 +11,7 @@ job_scripts/*
 *.pth
 *.vtp
 *.vti
+*.vtk
 *.png
 *.gz
 *.xls
