@@ -84,6 +84,11 @@ class LinearTransformNet(nn.Module):
         assert image.ndim == 5
         return image
 
+    def transform_vertices_list_from_parameters(self, verts_list, scale, translate, rotate):
+        linear_transformer = LinearTransformer(scale, translate, rotate)
+        transformed_verts = [linear_transformer.transform(v) for v in verts_list]
+        return transformed_verts
+
     def _linear_transform_vertices_list(self, image, verts_list, multiplication_factor):
         image = self._fix_input_shape(image)
         batch_size = image.shape[0]

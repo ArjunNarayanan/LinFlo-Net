@@ -1,6 +1,7 @@
 from src.unet import *
 import src.finite_difference as fd
 from src.utilities import batch_occupancy_map_from_vertices, occupancy_map
+from src.linear_transform import linear_transform_image
 
 
 class FlowDiv:
@@ -218,13 +219,15 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
 
 
 class LinearTransformSegmentFlow(nn.Module):
-    def __init__(self,
-                 input_size,
-                 pretrained_linear_transform,
-                 encoder,
-                 segment_decoder,
-                 flow_decoder,
-                 integrator):
+    def __init__(
+            self,
+            input_size,
+            pretrained_linear_transform,
+            encoder,
+            segment_decoder,
+            flow_decoder,
+            integrator
+    ):
         super().__init__()
 
         self.input_size = input_size
@@ -269,6 +272,126 @@ class LinearTransformSegmentFlow(nn.Module):
         encoder_input = self.get_encoder_input(image, occupancy)
 
         encoding = self.encoder(encoder_input)
+        predicted_segmentation = self.segment_decoder(encoding)
+        flow_field = self.flow_decoder(encoding)
+
+        flow_and_div = self.flow_div.get_flow_div(flow_field)
+        deformed_verts, div_integral = self.integrator.integrate_flow_and_div(flow_and_div, lt_deformed_vertices)
+
+        predictions = {"deformed_vertices": deformed_verts,
+                       "segmentation": predicted_segmentation,
+                       "divergence_integral": div_integral}
+
+        return predictions
+
+
+def linear_transform_distance_map(distance_map, scale, translate, rotate):
+    assert scale.ndim == translate.ndim == rotate.ndim == 1
+    assert scale.shape[0] == translate.shape[0] == rotate.shape[0] == 3
+    assert distance_map.ndim == 4
+
+    transformed_map = linear_transform_image(
+        distance_map,
+        scale,
+        translate,
+        rotate
+    )
+    return transformed_map
+
+
+def batch_transform_distance_map(distance_map, scale, translate, rotate):
+    assert scale.ndim == translate.ndim == rotate.ndim == 2
+    assert scale.shape[0] == translate.shape[0] == rotate.shape[0]
+    transformed_maps = []
+    batch_size = scale.shape[0]
+
+    for batch in range(batch_size):
+        transformed_maps.append(
+            linear_transform_distance_map(
+                distance_map,
+                scale[batch],
+                translate[batch],
+                rotate[batch]
+            )
+        )
+
+    return torch.stack(transformed_maps)
+
+
+class UDFLinearTransformSegmentFlow(nn.Module):
+    def __init__(
+            self,
+            input_size,
+            pretrained_linear_transform,
+            encoder,
+            segment_decoder,
+            flow_decoder,
+            integrator
+    ):
+        super().__init__()
+
+        self.input_size = input_size
+        self.pretrained_linear_transform = pretrained_linear_transform
+        self.encoder = encoder
+        self.segment_decoder = segment_decoder
+        self.flow_decoder = flow_decoder
+        self.integrator = integrator
+        self.flow_div = FlowDiv(self.input_size)
+
+        for param in self.pretrained_linear_transform.parameters():
+            param.requires_grad = False
+
+    def forward(self, image, vertices, distance_map):
+        assert image.ndim == 5
+
+        with torch.no_grad():
+            lt_parameters = self.pretrained_linear_transform.linear_transform_parameters_from_image(image)
+
+        scale, translate, rotate = lt_parameters
+        transformed_distance_map = batch_transform_distance_map(
+            distance_map,
+            scale,
+            translate,
+            rotate
+        )
+        lt_deformed_vertices = self.pretrained_linear_transform.transform_vertices_list_from_parameters(
+            vertices,
+            scale,
+            translate,
+            rotate
+        )
+
+        encoder_input = torch.cat([image, transformed_distance_map], dim=1)
+        encoding = self.encoder(encoder_input)
+
+        flow = self.flow_decoder(encoding)
+        deformed_vertices = self.integrator.integrate(flow, lt_deformed_vertices)
+
+        return deformed_vertices
+
+    def predict(self, image, vertices, distance_map):
+        assert image.ndim == 5
+
+        with torch.no_grad():
+            lt_parameters = self.pretrained_linear_transform.linear_transform_parameters_from_image(image)
+
+        scale, translate, rotate = lt_parameters
+        transformed_distance_map = batch_transform_distance_map(
+            distance_map,
+            scale,
+            translate,
+            rotate
+        )
+        lt_deformed_vertices = self.pretrained_linear_transform.transform_vertices_list_from_parameters(
+            vertices,
+            scale,
+            translate,
+            rotate
+        )
+
+        encoder_input = torch.cat([image, transformed_distance_map], dim=1)
+        encoding = self.encoder(encoder_input)
+
         predicted_segmentation = self.segment_decoder(encoding)
         flow_field = self.flow_decoder(encoding)
 
