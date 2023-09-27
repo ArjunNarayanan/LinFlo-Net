@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from src.unet_components import MultilayerCNN
 from pytorch3d.transforms import Scale, Translate, Rotate, euler_angles_to_matrix
+from monai.transforms import Affine
 
 
 class LinearTransformer:
@@ -55,6 +56,18 @@ class LinearTransformNet(nn.Module):
         downarm_channels = definition["downarm_channels"]
         return cls(input_shape, input_channels, first_layer_channels, downarm_channels)
 
+    def linear_transform_parameters_from_image(self, image):
+        image = self._fix_input_shape(image)
+        encoding = self.encoder(image)
+        x = encoding.reshape([encoding.shape[0], -1])
+        transform_parameters = self.linear_transform_parameters(x)
+
+        scale_by = (1.0 - transform_parameters[:, 0:3])
+        translate_by = transform_parameters[:, 3:6]
+        rotate_by = self.scale_rotation * transform_parameters[:, 6:9]
+
+        return scale_by, translate_by, rotate_by
+
     def get_linear_transformer(self, encoding, multiplication_factor):
         x = encoding.reshape([encoding.shape[0], -1])
         transform_parameters = self.linear_transform_parameters(x)
@@ -107,10 +120,11 @@ class LinearTransformNet(nn.Module):
         predictions = {"deformed_vertices": deformed_vertices}
         return predictions
 
+
 class IdentityLinearTransform(nn.Identity):
     def __init__(self):
         super().__init__()
-    
+
     def forward(self, image, vertices):
         return vertices
 
@@ -130,3 +144,41 @@ class LinearTransformWithEncoder(nn.Module):
         encoding = torch.cat([image, encoding], dim=1)
         deformed_vertices = self.linear_transform(encoding, vertices)
         return deformed_vertices
+
+
+def linear_transform_image(
+        image,
+        scale_params=None,
+        translate_params=None,
+        rotate_params=None
+):
+    # Operation order needs to be consistent with LinearTransformer, so we need to do
+    # Scale, rotate, translate
+
+    # monai performs inverse scaling on images so we invert the scale parameters
+    scale_params = (1 / scale_params).tolist()
+    scaler = Affine(
+        scale_params=scale_params,
+        image_only=True,
+        padding_mode="zeros"
+    )
+
+    # monai performs inverse translation, so we negate translation
+    # we also need to scale the translation parameters from normalized value to image units
+    image_size = image.shape[-1] // 2
+    translate_params = (-image_size * translate_params).tolist()
+    translater = Affine(
+        translate_params=translate_params,
+        image_only=True,
+        padding_mode="zeros"
+    )
+
+    # rotation parameters are expected to be in radian
+    rotater = Affine(
+        rotate_params=rotate_params.tolist(),
+        image_only=True,
+        padding_mode="zeros"
+    )
+
+    transformed_image = translater(rotater(scaler(image)))
+    return transformed_image
