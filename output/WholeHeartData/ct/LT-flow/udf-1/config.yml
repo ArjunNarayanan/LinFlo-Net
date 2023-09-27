@@ -4,7 +4,7 @@ data:
     validation_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/processed
     template_filename: data/template/highres_template.vtp
     template_distance_map: data/template/highres_template_distance.vtk
-    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/LT-flow/model-1
+    output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct/LT-flow/udf-flow
 train:
     num_epochs: 50
     batch_size: 1
@@ -26,7 +26,7 @@ model:
         uparm_channels: [256, 128, 64, 32, 32]
     flow:
         decoder_hidden_channels: 32
-        clip: 0.05
+        clip: 0.015
     segment:
         decoder_hidden_channels: 32
         output_channels: 8

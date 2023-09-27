@@ -157,9 +157,6 @@ def linear_transform_image(
         translate_params=None,
         rotate_params=None
 ):
-    # Operation order needs to be consistent with LinearTransformer, so we need to do
-    # Scale, rotate, translate
-
     # monai performs inverse scaling on images so we invert the scale parameters
     scale_params = (1 / scale_params).tolist()
     scaler = Affine(
@@ -185,5 +182,8 @@ def linear_transform_image(
         padding_mode="zeros"
     )
 
+    # Operation order needs to be consistent with LinearTransformer, so we need to do
+    # Scale, rotate, translate
     transformed_image = translater(rotater(scaler(image)))
+    
     return transformed_image
