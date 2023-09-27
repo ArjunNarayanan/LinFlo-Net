@@ -218,7 +218,7 @@ class EncodeLinearTransformSegmentFlow(nn.Module):
         return predictions
 
 
-class UDFEncoderLinearTransformSegmentFlow(nn.Module):
+class UDFEncodeLinearTransformSegmentFlow(nn.Module):
     def __init__(
             self,
             input_size,

@@ -30,13 +30,16 @@ def initialize_model(model_config):
     flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
 
     integrator = IntegrateFlowDivRK4(model_config["integrator"]["num_steps"])
-    net = EncodeLinearTransformSegmentFlow(INPUT_SHAPE,
-                                           pretrained_encoder,
-                                           pretrained_linear_transform,
-                                           encoder,
-                                           segment_decoder,
-                                           flow_decoder,
-                                           integrator)
+    net = UDFEncodeLinearTransformSegmentFlow(
+        INPUT_SHAPE,
+        pretrained_encoder,
+        pretrained_linear_transform,
+        encoder,
+        segment_decoder,
+        flow_decoder,
+        integrator
+    )
+    
     return net
 
 
