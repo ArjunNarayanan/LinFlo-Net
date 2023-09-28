@@ -85,7 +85,7 @@ def add_dataset(ax, df, start, step, color, width=1):
     return bp
 
 
-base_dir = "output/WholeHeartData/ct/compiled-figures"
+base_dir = "output/WholeHeartData/ct/compiled-figures/dice-occupancy"
 
 direct_flow_df = pd.read_csv(os.path.join(base_dir, "direct-flow.csv"))
 lt_df = pd.read_csv(os.path.join(base_dir, "linear-transform.csv"))
