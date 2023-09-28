@@ -24,7 +24,7 @@ def initialize_model(model_config):
     segment_decoder = Decoder(decoder_input_channels, decoder_hidden_channels, decoder_output_channels)
 
     # since we add occupancy as a new channel, input channels increases by one
-    decoder_input_channels = decoder_input_channels + 1
+    decoder_input_channels = decoder_input_channels
     decoder_hidden_channels = model_config["flow"]["decoder_hidden_channels"]
     flow_clip_value = model_config["flow"]["clip"]
     flow_decoder = FlowDecoder(decoder_input_channels, decoder_hidden_channels, flow_clip_value)
