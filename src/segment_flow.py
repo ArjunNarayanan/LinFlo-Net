@@ -493,7 +493,7 @@ class UDFLinearTransformSegmentFlow(nn.Module):
             translate,
             rotate
         )
-        lt_deformed_vertices = self.pretrained_linear_transform.transform_vertices_list_from_parameters(
+        lt_deformed_vertices = self.pretrained_linear_transform.transform_from_parameters(
             vertices,
             scale,
             translate,
