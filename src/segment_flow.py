@@ -275,7 +275,7 @@ class UDFEncodeLinearTransformSegmentFlow(nn.Module):
             translate,
             rotate
         )
-        lt_deformed_vertices = self.pretrained_linear_transform.transform_vertices_list_from_parameters(
+        lt_deformed_vertices = self.pretrained_linear_transform.transform_from_parameters(
             vertices,
             scale,
             translate,
@@ -311,17 +311,18 @@ class UDFEncodeLinearTransformSegmentFlow(nn.Module):
             translate,
             rotate
         )
-        lt_deformed_vertices = self.pretrained_linear_transform.transform_vertices_list_from_parameters(
+        lt_deformed_vertices = self.pretrained_linear_transform.transform_from_parameters(
             vertices,
             scale,
             translate,
             rotate
         )
 
-        pre_encoding = torch.cat([pre_encoding, transformed_distance_map], dim=1)
+        pre_encoding = torch.cat([image, pre_encoding], dim=1)
         encoding = self.encoder(pre_encoding)
 
-        flow_field = self.flow_decoder(encoding)
+        flow_encoding = torch.cat([encoding, transformed_distance_map], dim=1)
+        flow_field = self.flow_decoder(flow_encoding)
         deformed_verts = self.integrator.integrate(flow_field, lt_deformed_vertices)
 
         return deformed_verts
@@ -463,7 +464,8 @@ class UDFLinearTransformSegmentFlow(nn.Module):
             translate,
             rotate
         )
-        lt_deformed_vertices = self.pretrained_linear_transform.transform_vertices_list_from_parameters(
+        
+        lt_deformed_vertices = self.pretrained_linear_transform.transform_from_parameters(
             vertices,
             scale,
             translate,

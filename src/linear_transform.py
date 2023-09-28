@@ -84,10 +84,25 @@ class LinearTransformNet(nn.Module):
         assert image.ndim == 5
         return image
 
-    def transform_vertices_list_from_parameters(self, verts_list, scale, translate, rotate):
+    def _transform_vertices_list_from_parameters(self, verts_list, scale, translate, rotate):
+        assert isinstance(verts_list, list)
+
         linear_transformer = LinearTransformer(scale, translate, rotate)
         transformed_verts = [linear_transformer.transform(v) for v in verts_list]
         return transformed_verts
+
+    def _transform_vertices_from_parameters(self, verts, scale, translate, rotate):
+        assert isinstance(verts, torch.Tensor)
+        linear_transformer = LinearTransformer(scale, translate, rotate)
+        return linear_transformer.transform(verts)
+
+    def transform_from_parameters(self, verts, scale, translate, rotate):
+        if isinstance(verts, list):
+            return self._transform_vertices_list_from_parameters(verts, scale, translate, rotate)
+        elif isinstance(verts, torch.Tensor):
+            return self._transform_vertices_from_parameters(verts, scale, translate, rotate)
+        else:
+            raise TypeError("Expected vertices to be list of tensors or tensor, got ", type(vertices))
 
     def _linear_transform_vertices_list(self, image, verts_list, multiplication_factor):
         image = self._fix_input_shape(image)
