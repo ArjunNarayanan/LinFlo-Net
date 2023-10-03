@@ -85,12 +85,12 @@ def add_dataset(ax, df, start, step, color, width=1):
     return bp
 
 
-base_dir = "output/WholeHeartData/ct/compiled-figures/dice-udf"
+base_dir = "output/WholeHeartData/ct-mr-cropped/compiled-figures/dice-compare-ct-mr"
 
 # direct_flow_df = pd.read_csv(os.path.join(base_dir, "direct-flow.csv"))
 # lt_df = pd.read_csv(os.path.join(base_dir, "linear-transform.csv"))
-lt_flow_occupancy = pd.read_csv(os.path.join(base_dir, "LT-flow-occupancy.csv"))
-lt_flow_udf = pd.read_csv(os.path.join(base_dir, "LT-flow-udf.csv"))
+ct_dice = pd.read_csv(os.path.join(base_dir, "ct_compiled.csv"))
+mr_dice = pd.read_csv(os.path.join(base_dir, "mr_compiled.csv"))
 
 start = 1
 step = 4
@@ -102,18 +102,18 @@ ax.set_xlim([0, 28])
 ax.plot([0., 36], 2 * [0.9], "--", color="black")
 
 # flow_bp = add_dataset(ax, direct_flow_df, start=1, step=5, color="salmon")
-lt_flow_occ_bp = add_dataset(ax, lt_flow_occupancy, start=1, step=step, color="olive")
-lt_flow_udf_bp = add_dataset(ax, lt_flow_udf, start=2, step=step, color="goldenrod")
+ct_bp = add_dataset(ax, ct_dice, start=1, step=step, color="olive")
+mr_bp = add_dataset(ax, mr_dice, start=2, step=step, color="goldenrod")
 ax.legend(
     [
         # flow_bp["boxes"][0],
-        lt_flow_occ_bp["boxes"][0],
+        ct_bp["boxes"][0],
         # lt_flow_bp["boxes"][0],
-        lt_flow_udf_bp["boxes"][0]
+        mr_bp["boxes"][0]
     ],
     [
-        "Occ",
-        "UDF",
+        "CT",
+        "MR",
     ],
     loc="lower center"
 )
@@ -124,4 +124,4 @@ ax.set_xticks(xtick_positions, ["Myocardium", "Left Ventricle", "Right Ventricle
 ax.set_ylabel("Test Dice Score")
 fig.tight_layout()
 # fig.savefig(os.path.join(base_dir, "dice_comparison.pdf"))
-fig.savefig(os.path.join(base_dir, "occ-vs-udf.png"))
+fig.savefig(os.path.join(base_dir, "ct-vs-mr.png"))

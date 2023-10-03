@@ -40,7 +40,6 @@ if __name__ == '__main__':
         sample_name = os.path.basename(file_name)
         image_file = os.path.join(image_dir, sample_name)
         assert os.path.isfile(image_file)
-        print("Processing file ", image_file)
 
         image = sitk.ReadImage(image_file)
         current_segmentation = sitk.ReadImage(file_name)
@@ -70,5 +69,7 @@ if __name__ == '__main__':
         out_im.SetSpacing(new_segmentation.GetSpacing())
         out_im.SetDirection(new_segmentation.GetDirection())
         out_file = os.path.join(output_segmentation_dir, sample_name)
+
+        print("Writing output : ", out_file)
         sitk.WriteImage(out_im, out_file)
 

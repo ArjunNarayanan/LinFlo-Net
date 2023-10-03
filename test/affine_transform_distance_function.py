@@ -47,10 +47,11 @@ def transform_mesh_and_distance_map(image):
         distance_map,
         scale,
         translate,
-        rotate
+        rotate,
+        interpolation
     )
 
-    print_max_distance_value(deformed_coords, transformed_distance_map)
+    # print_max_distance_value(deformed_coords, transformed_distance_map)
 
     transformed_distance_map = transformed_distance_map.squeeze(0).cpu().numpy()
     transformed_distance_map = transformed_distance_map.transpose(2, 1, 0)
@@ -82,9 +83,11 @@ def process_file(file_index):
 if __name__ == "__main__":
     model_fn = "../output/WholeHeartData/ct/linear-transform/augment-20/best_model.pth"
     data_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/WholeHeartData/validation/ct/processed"
-    output_dir = "../output/WholeHeartData/ct/linear-transform/augment-20/transformed-distance-maps"
+    output_dir = "../output/WholeHeartData/ct/linear-transform/augment-20/transformed-segmentation-maps"
+    interpolation = "nearest"
 
-    template_distance_file = "../data/template/highres_template_distance.vtk"
+    # template_distance_file = "../data/template/highres_template_distance.vtk"
+    template_distance_file = "../data/template/highres_template_segmentation.vti"
     template_file = "../data/template/highres_template.vtp"
 
     template = Template.from_vtk(template_file)

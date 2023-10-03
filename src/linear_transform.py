@@ -170,14 +170,16 @@ def linear_transform_image(
         image,
         scale_params=None,
         translate_params=None,
-        rotate_params=None
+        rotate_params=None,
+        interpolation="bilinear"
 ):
     # monai performs inverse scaling on images so we invert the scale parameters
     scale_params = (1 / scale_params).tolist()
     scaler = Affine(
         scale_params=scale_params,
         image_only=True,
-        padding_mode="zeros"
+        padding_mode="zeros",
+        mode=interpolation
     )
 
     # monai performs inverse translation, so we negate translation
@@ -187,14 +189,16 @@ def linear_transform_image(
     translater = Affine(
         translate_params=translate_params,
         image_only=True,
-        padding_mode="zeros"
+        padding_mode="zeros",
+        mode=interpolation
     )
 
     # rotation parameters are expected to be in radian
     rotater = Affine(
         rotate_params=rotate_params.tolist(),
         image_only=True,
-        padding_mode="zeros"
+        padding_mode="zeros",
+        mode=interpolation
     )
 
     # Operation order needs to be consistent with LinearTransformer, so we need to do
