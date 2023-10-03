@@ -66,7 +66,16 @@ if __name__ == "__main__":
     template = Template.from_vtk(tmplt_fn, device=device)
 
     tmplt_distance_fn = config["data"]["template_distance_map"]
-    template_distance_map = read_image(tmplt_distance_fn).unsqueeze(0).to(device)
+    distance_fn_ext = os.path.splitext(tmplt_distance_fn)[1]
+
+    if distance_fn_ext == ".vtk":
+        print("\n\tLOADING VTK DISTANCE FUNCTION")
+        template_distance_map = read_image(tmplt_distance_fn).unsqueeze(0).to(device)
+    elif distance_fn_ext == ".pth":
+        print("\n\tLOADING PYTORCH TEMPLATE SEGMENTATION")
+        template_distance_map = torch.load(tmplt_distance_fn).to(device)
+
+
 
     if "point_cloud_filename" in config["data"]:
         point_cloud_fn = config["data"]["point_cloud_filename"]
