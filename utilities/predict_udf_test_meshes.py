@@ -120,7 +120,16 @@ if __name__ == "__main__":
     template = Template.from_vtk(template_fn, faceids_name=faceids_name)
 
     template_distance_map_fn = config["files"]["template_distance_map"]
-    template_distance_map = read_image(template_distance_map_fn).unsqueeze(0).to(device)
+    distance_fn_ext = os.path.splitext(template_distance_map_fn)[1]
+
+    if distance_fn_ext == ".vtk":
+        print("\n\tLOADING VTK DISTANCE FUNCTION")
+        template_distance_map = read_image(template_distance_map_fn).unsqueeze(0).to(device)
+    elif distance_fn_ext == ".pth":
+        print("\n\tLOADING PYTORCH TEMPLATE SEGMENTATION")
+        template_distance_map = torch.load(template_distance_map_fn).to(device)
+    else:
+        raise ValueError("Unexpected template distance file extension : ", distance_fn_ext)
 
     root_dir = config["files"]["root_dir"]
     extension = config["files"]["extension"]
