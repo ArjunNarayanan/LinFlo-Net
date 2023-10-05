@@ -4,7 +4,7 @@ import numpy as np
 import argparse
 
 
-def compile_scores():
+def compile_dice_scores():
     all_scores = []
     all_samples = []
 
@@ -24,17 +24,54 @@ def compile_scores():
 
     df = df[["sample", "LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"]]
 
-    output_fn = modality + "_compiled.csv"
+    output_fn = modality + "_dice_compiled.csv"
     output_file = os.path.join(output_folder, output_fn)
 
     print("Writing dataframe to ", output_file)
     df.to_csv(output_file, index=False)
 
 
+def compile_jaccard_scores():
+    all_scores = []
+    all_samples = []
+
+    indices = range(1, 41)
+    for idx in indices:
+        filename = modality + "_" + "jaccard" + str(idx) + ".xls"
+        input_file = os.path.join(input_folder, filename)
+        data = pd.read_csv(input_file, sep="\t", header=None)
+        scores = data.iloc[0, :8]
+        all_scores.append(scores)
+        sample_name = data.iloc[0, 9]
+        all_samples.append(sample_name)
+
+    np_scores = np.vstack(all_scores)
+    df = pd.DataFrame(np_scores, columns=["LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"])
+    df["sample"] = all_samples
+
+    df = df[["sample", "LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"]]
+
+    output_fn = modality + "_jaccard_compiled.csv"
+    output_file = os.path.join(output_folder, output_fn)
+
+    print("Writing dataframe to ", output_file)
+    df.to_csv(output_file, index=False)
+
+
+def compute_metrics(metric):
+    if metric == "dice":
+        compile_dice_scores()
+    elif metric == "jaccard":
+        compile_jaccard_scores()
+    else:
+        raise ValueError("Unexpected metric type : ", metric)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Compile MMWHS test dice scores into one file")
     parser.add_argument("-input", help="Input folder", required=True)
     parser.add_argument("-output", help="Output folder", default=None)
+    parser.add_argument("-metrics", help="Metrics to compute", nargs="*", default=None)
     parser.add_argument("-modality", help="Modality", required=True)
     args = parser.parse_args()
 
@@ -44,4 +81,9 @@ if __name__ == "__main__":
         output_folder = os.path.dirname(input_folder)
 
     modality = args.modality
-    compile_scores()
+    metrics = args.metrics
+    if metrics is None:
+        metrics = ["dice", "jaccard"]
+
+    for metric in args.metrics:
+        compute_metrics(metric)
