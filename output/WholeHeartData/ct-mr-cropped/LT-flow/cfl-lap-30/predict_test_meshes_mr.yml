@@ -1,0 +1,12 @@
+info:
+  input_size: [128, 128, 128]
+  num_mesh: 7
+files:
+  extension: .nii.gz
+  model: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct-mr-cropped/LT-flow/cfl-lap-30/best_model.pth
+  template: data/template/highres_template.vtp
+  template_distance_map: data/template/highres_template_distance.vtk
+  root_dir: /global/scratch/users/arjunnarayanan/MMWHS_test/mr-perturbed-crop
+  output_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/ct-mr-cropped/LT-flow/cfl-lap-30/MMWHS-test/mr
+  output_extension: .nii.gz
+modality: mr
