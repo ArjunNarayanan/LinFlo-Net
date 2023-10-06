@@ -20,40 +20,68 @@ def compile_results_for_structure(structure):
         vals.append(df.iloc[0].to_list())
 
     output_df = pd.DataFrame(vals, columns=["Avg", "Std", "Max"])
-    output_file_name = modality + "_surface_" + structure_to_output_name(structure) + ".csv"
-
-    output_filepath = os.path.join(os.path.dirname(input_folder), output_file_name)
 
     return output_df
 
 
-input_folder = "output/WholeHeartData/ct-mr-cropped/LT-flow/udf-1-contd/MMWHS-test/test-results"
-output_folder = os.path.dirname(input_folder)
+def update_summary_statistics(df):
+    avg = df.iloc[:, 1:].mean(axis=0)
+    median = df.iloc[:, 1:].median(axis=0)
+    maximum = df.iloc[:, 1:].max(axis=0)
 
-modality = "ct"
-csv_structure_names = ["LV", "Epi", "RV", "LA", "RA", "LO", "PA", "WHS"]
+    avg["sample"] = "Average"
+    median["sample"] = "Median"
+    maximum["sample"] = "Max"
 
-assd_df = pd.DataFrame()
-std_df = pd.DataFrame()
-max_df = pd.DataFrame()
+    numrows = len(df)
+    df.loc[numrows] = avg
+    df.loc[numrows+1] = median
+    df.loc[numrows+2] = maximum
 
-LV_df = compile_results_for_structure("LV")
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Compile surface distance metrics")
+    parser.add_argument("-input", help="Input folder", required=True)
+    parser.add_argument("-modality", help="Imaging modality", required=True)
+    parser.add_argument("-output", help="Output folder", default=None)
+    args = parser.parse_args()
 
-# if __name__ == "__main__":
-#     parser = argparse.ArgumentParser(description="Compile surface distance metrics")
-#     parser.add_argument("-input", help="Input folder", required=True)
-#     parser.add_argument("-modality", help="Imaging modality", required=True)
-#     parser.add_argument("-output", help="Output folder", default=None)
-#     args = parser.parse_args()
-#
-#     input_folder = args.input
-#     output_folder = args.output
-#     if output_folder is None:
-#         output_folder = os.path.dirname(input_folder)
-#
-#     modality = args.modality
-#
-#     csv_structure_names = ["LV", "Epi", "RV", "LA", "RA", "LO", "PA", "WHS"]
-#     for structure in csv_structure_names:
-#         compile_results_for_structure(structure)
+    input_folder = args.input
+    output_folder = args.output
+    if output_folder is None:
+        output_folder = os.path.dirname(input_folder)
+
+    modality = args.modality
+
+    csv_structure_names = ["LV", "Epi", "RV", "LA", "RA", "LO", "PA", "WHS"]
+    output_names = ["LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"]
+
+    sample_names = [modality + str(2000 + idx) for idx in range(1, 41)]
+    assd_df = pd.DataFrame(sample_names, columns=["sample"])
+    std_df = pd.DataFrame(sample_names, columns=["sample"])
+    max_df = pd.DataFrame(sample_names, columns=["sample"])
+
+    for idx, name in enumerate(csv_structure_names):
+        output_structure_name = output_names[idx]
+        print("Compiling results for structure ", output_structure_name)
+        structure_df = compile_results_for_structure(name)
+        assd_df[output_structure_name] = structure_df["Avg"]
+        std_df[output_structure_name] = structure_df["Std"]
+        max_df[output_structure_name] = structure_df["Max"]
+
+    output_order = ["sample", "Epi", "LA", "LV", "RA", "RV", "Ao", "PA", "WH"]
+    assd_df = assd_df[output_order]
+    std_df = std_df[output_order]
+    max_df = max_df[output_order]
+
+    update_summary_statistics(assd_df)
+    update_summary_statistics(std_df)
+    update_summary_statistics(max_df)
+
+    print("\n\nWriting compiled results:")
+    assd_output_file = os.path.join(output_folder, modality + "_assd.csv")
+    assd_df.to_csv(assd_output_file, index=False)
+    std_output_file = os.path.join(output_folder, modality + "_surface_std.csv")
+    std_df.to_csv(std_output_file, index=False)
+    max_output_file = os.path.join(output_folder, modality + "_hausdorff.csv")
+    max_df.to_csv(max_output_file, index=False)

@@ -4,7 +4,23 @@ import numpy as np
 import argparse
 
 
+def update_summary_statistics(df):
+    avg = df.iloc[:, 1:].mean(axis=0)
+    median = df.iloc[:, 1:].median(axis=0)
+    maximum = df.iloc[:, 1:].min(axis=0)
+
+    avg["sample"] = "Average"
+    median["sample"] = "Median"
+    maximum["sample"] = "Min"
+
+    numrows = len(df)
+    df.loc[numrows] = avg
+    df.loc[numrows + 1] = median
+    df.loc[numrows + 2] = maximum
+
+
 def compile_dice_scores():
+    print("\nCompiling dice scores : ")
     all_scores = []
     all_samples = []
 
@@ -22,7 +38,9 @@ def compile_dice_scores():
     df = pd.DataFrame(np_scores, columns=["LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"])
     df["sample"] = all_samples
 
-    df = df[["sample", "LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"]]
+    df = df[output_order]
+
+    update_summary_statistics(df)
 
     output_fn = modality + "_dice_compiled.csv"
     output_file = os.path.join(output_folder, output_fn)
@@ -32,6 +50,7 @@ def compile_dice_scores():
 
 
 def compile_jaccard_scores():
+    print("\nCompiling Jaccard Index :")
     all_scores = []
     all_samples = []
 
@@ -49,7 +68,8 @@ def compile_jaccard_scores():
     df = pd.DataFrame(np_scores, columns=["LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"])
     df["sample"] = all_samples
 
-    df = df[["sample", "LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"]]
+    df = df[output_order]
+    update_summary_statistics(df)
 
     output_fn = modality + "_jaccard_compiled.csv"
     output_file = os.path.join(output_folder, output_fn)
@@ -75,6 +95,7 @@ if __name__ == "__main__":
     parser.add_argument("-modality", help="Modality", required=True)
     args = parser.parse_args()
 
+    output_order = ["sample", "Epi", "LA", "LV", "RA", "RV", "Ao", "PA", "WH"]
     input_folder = args.input
     output_folder = args.output
     if output_folder is None:
@@ -85,5 +106,5 @@ if __name__ == "__main__":
     if metrics is None:
         metrics = ["dice", "jaccard"]
 
-    for metric in args.metrics:
+    for metric in metrics:
         compute_metrics(metric)

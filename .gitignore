@@ -10,6 +10,7 @@ job_scripts/*
 *.xlsx
 *.pth
 *.vtp
+*.stl
 *.vti
 *.vtk
 *.png
