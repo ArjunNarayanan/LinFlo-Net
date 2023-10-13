@@ -10,14 +10,18 @@ if __name__ == '__main__':
     and updates the label ids. The filenames in the segmentation and image folders are assumed to match.
     '''
     parser = argparse.ArgumentParser(description="Resample segmentation into original image space")
-    parser.add_argument("-image", help="path to image folder", required=True)
-    parser.add_argument("-segmentation", help="path to segmentation folder", required=True)
+    parser.add_argument("-image", help="path to image folder", default=None)
+    parser.add_argument("-input", help="path to segmentation folder", required=True)
     parser.add_argument("-output", help="path to output folder", default=None)
     parser.add_argument("-ext", help="file extension", default=".nii.gz")
     args = parser.parse_args()
 
     image_dir = args.image
-    input_segmentation_dir = args.segmentation
+    if image_dir is None:
+        image_dir = "/Users/arjun/Documents/Research/SimCardio/Datasets/MMWHS_test/mr/image"
+        print("\n\nUSING DEFAULT IMAGE DIR : ", image_dir)
+
+    input_segmentation_dir = args.input
     output_segmentation_dir = args.output
     extension = args.ext
 
