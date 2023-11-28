@@ -85,8 +85,8 @@ def add_dataset(ax, df, start, step, color, width=1):
     return bp
 
 
-base_dir = "output/WholeHeartData/ct-mr-cropped/compiled-figures/dice-ablation/ct"
-fontsize = 16
+base_dir = "output/WholeHeartData/ct-mr-cropped/compiled-figures/dice-ablation/mr"
+fontsize = 24
 
 fl_df = pd.read_csv(os.path.join(base_dir, "FL.csv"))
 lt_df = pd.read_csv(os.path.join(base_dir, "LT.csv"))
