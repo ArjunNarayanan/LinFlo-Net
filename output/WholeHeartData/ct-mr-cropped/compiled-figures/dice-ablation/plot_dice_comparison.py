@@ -85,7 +85,7 @@ def add_dataset(ax, df, start, step, color, width=1):
     return bp
 
 
-base_dir = "output/WholeHeartData/ct-mr-cropped/compiled-figures/dice-ablation/mr"
+base_dir = "output/WholeHeartData/ct-mr-cropped/compiled-figures/dice-ablation/ct"
 fontsize = 24
 
 fl_df = pd.read_csv(os.path.join(base_dir, "FL.csv"))
@@ -120,7 +120,8 @@ ax.legend(
         "LT-FL-v"
     ],
     loc="lower center",
-    fontsize=fontsize
+    fontsize=fontsize,
+    ncol=2
 )
 
 
