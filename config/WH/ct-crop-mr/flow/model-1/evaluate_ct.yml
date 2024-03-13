@@ -1,6 +1,0 @@
-files:
-  model: /global/scratch/users/arjunnarayanan/WholeHeart-ct-crop-mr/trained_models/flow/model-1/best_model.pth
-  out_dir: /global/scratch/users/arjunnarayanan/WholeHeart-ct-crop-mr/trained_models/flow/model-1/evaluation/ct
-  template: data/template/highres_template.vtp
-  root_dir: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/ct/indexed
-modality: ct

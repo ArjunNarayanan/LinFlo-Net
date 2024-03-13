@@ -1,6 +1,0 @@
-dataset: /global/scratch/users/arjunnarayanan/WholeHeartData/validation/mr/processed
-model: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/segmentation-1/best_model.pth
-output_folder: /global/scratch/users/arjunnarayanan/WholeHeartData/trained_models/segmentation-1/evaluation
-output_file: validation_dice.csv
-header: ["Background", "Left Ventricle", "Left Atrium", "LV Blood Pool", "Right Atrium", "Right Ventricle",
-                    "Aorta", "Pulmonary Artery"]

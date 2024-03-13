@@ -1,6 +1,0 @@
-files:
-  model: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/trained_models/segment_flow/model-3-rerun/best_model.pth
-  out_dir: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/trained_models/segment_flow/model-3-rerun/evaluation/ct
-  template: data/template/highres_template.vtp
-  root_dir: /global/scratch/users/arjunnarayanan/WholeHeartDataWithInlets/indexed_raw_validation/ct
-modality: ct

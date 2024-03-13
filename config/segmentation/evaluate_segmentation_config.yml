@@ -1,6 +1,0 @@
-dataset: 
-model: 
-output_folder: 
-output_file: validation_dice.csv
-header: ["Background", "Left Ventricle", "Left Atrium", "LV Blood Pool", "Right Atrium", "Right Ventricle",
-                    "Aorta", "Pulmonary Artery"]

@@ -1,0 +1,5 @@
+im_folder: /path/to/image/folder # for training data use the augmented images
+seg_folder: /path/to/segmentation/folder # for training data use the augmented segmentations
+out_folder: /path/to/output/folder
+modality: ct # ct or mr
+extension: .nii.gz # file extension of image and segmentation data

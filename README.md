@@ -1,17 +1,19 @@
-# HeartFlow
+![image](figures/flow-deformation-no-encoder.png)
+
+# LinFlo-Net
 
 This is a deep learning package to automatically generate simulation ready 3D meshes of the human heart from biomedical images.
 
 ## Setting up environment on Savio
 
-The following instructions can set up a conda environment on the Berkeley Research Computing Savio system.
+The following instructions can set up a conda environment on the Berkeley Research Computing Savio system. But a similar approach can be used on an SLURM based high-performance computing cluster.
 
 Since Savio provides limited space in your home directory, we install all conda packages to our scratch folder.
 
 ```commandline
 module load cuda/10.2
 module load gcc/5.4.0
-ENVDIR=/global/scratch/users/<your_username>/environments/heartflow
+ENVDIR=/global/scratch/users/<your_username>/environments/linflonet
 rm -rf $ENVDIR
 export CONDA_PKGS_DIRS=/global/scratch/users/<your_username>/tmp/.conda
 conda create --prefix $ENVDIR
@@ -52,7 +54,7 @@ srun --pty -A <account_name> -p savio3_gpu --nodes=1 --gres=gpu:GTX2080TI:1 --nt
 Once your resources are allocated, load your conda environment and launch python
 
 ```commandline
-source activate /global/scratch/users/<your_username>/environments/heartflow
+source activate /global/scratch/users/<your_username>/environments/linflonet
 python
 ```
 
@@ -69,6 +71,63 @@ loss = chamfer_distance(a, b)
 ```
 
 If everything runs without error, you are all set!
+
+## Dataset Creation
+
+We use the multi-modality whole heart segmentation challenge (MMWHS) [dataset](https://zmiclab.github.io/zxh/0/mmwhs/). Download and unzip the data. You should have the following folders,
+
+   - CT : 2 folders each with 10 images and corresponding segmentations
+   - MR : 1 folder with 20 images and corresponding segmentations
+
+You can split the data into train and validation as you find appropriate. We chose to use the first 16 samples as training and the remaining 4 samples as validation. Split the data appropriately and place them in separate folders. Make sure to keep the CT and MR data separately as we will need to normalize / scale them differently. We will perform data augmentation on the training data.
+
+### Data augmentation
+
+We will use the data augmentation procedure available in the [MeshDeformNet](https://github.com/fkong7/MeshDeformNet) package. Clone this package to your system and run `pip install -r requirements.txt` to install package dependencies. (You may want to create a virtual environment first.)
+
+To perform augmentation, modify the command below and execute it
+
+```commandline
+mpirun -np 16 python ~/path/to/MeshDeformNet/data/data_augmentation.py \
+    --im_dir /path/to/image/directory \
+    --seg_dir /path/to/segmentation/directory \
+    --out_dir /path/to/output/directory \
+    --modality ct or mr \
+    --mode train \
+    --num number_of_augmentations
+```
+
+The output folder will contain two subfolders `modality_train` with the augmented images and `modality_train_seg` with the augmented segmentations where modality is either `ct` or `mr`.
+
+### Creating ground-truth meshes
+
+We generate ground-truth meshes using marching cubes on the ground-truth segmentations. We can do this using `prepare_data.py` which is in the base directory of this package. We pass directory information using a yaml config file. (All example config files are in the `config/` sub-folder.)
+
+```yaml
+im_folder: /path/to/image/folder # for training data use the augmented images
+seg_folder: /path/to/segmentation/folder # for training data use the augmented segmentations
+out_folder: /path/to/output/folder
+modality: ct # ct or mr
+extension: .nii.gz # file extension of image and segmentation data
+```
+
+The output folder is going to have 3 subfolders : `seg`, `vtk_image`, `vtk_mesh`. `vtk_image` will be the input to our neural network, and `vtk_mesh` will be the corresponding ground truth meshes. From this point onward, we assume that the folder with the relevant data has the `vtk_image` and `vtk_mesh` subfolders.
+
+### Final steps
+
+The data set is reasonably large, and we will have to load it from memory. It is useful to store the images as pytorch tensors and the meshes as pytorch3d data structures in pickled files. To do this, we first build a csv index of all the files.
+
+```commandline
+python utilities/prepare_csv.py -f /path/to/data
+```
+
+This will create an `index.csv` in the data folder with the names of all files. Next,
+
+```commandline
+python utilities/pickle_pytorch3d_dataset.py -f /path/to/data -o /path/to/output/folder
+```
+
+The output folder will now contain `.pkl` files which contain the combined image and meshes in a dictionary. This can be used by our dataloader to load the appropriate files during training.
 
 
 ## Using pre-trained model
