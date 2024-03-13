@@ -136,9 +136,29 @@ The output folder will now contain `.pkl` files which contain the combined image
 
 ## Training the model
 
+Before training, make sure to activate the conda environment that we created earlier. Request a GPU session if you would like to use a GPU for training. Alternatively, submit the below commands as part of a batch job with `sbatch` on a SLURM system. The training workflow will save the best performing model as a checkpoint in the output directory specified in the config file.
 
+### Training Linear Transformation module
 
-## Using pre-trained model
+Take a look at the example config file in `config/linear_transform.yml`. Make a copy, and modify it appropriately.
+
+Then run the command,
+
+```commandline
+python workflows/train_linear_transform.py -config /path/to/config/file
+```
+
+### Training the Flow Deformation module
+
+Take a look at the example config file in `config/flow_deformation.yml`. Make a copy, and modify it appropriately. In particular, make sure you provide the path to the linear transformation module trained in the previous step.
+
+Then run the command,
+
+```commandline
+python workflows/train_flow_with_udf.py -config /path/to/config/file
+```
+
+## Using trained models on new data
 
 The pre-trained model takes as input a CT image in NIFTI format, a template mesh in VTP format and outputs a deformed mesh in VTP format.
 
@@ -152,10 +172,12 @@ Note that the argument to `-f` is the path to the **parent** directory of the `i
 
 After generating the index, it's time to execute the model.
 
-Use one of the config files for example `config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml`. Modify the path to the model, path to the image dataset, and the path to your output directory. Next, run the prediction script,
+Take a look at the example config file `config/predict_test_meshes_ct.yml`. Modify the path to the model, path to the image dataset, and the path to your output directory. Next, run the prediction script,
 
 ```
-python utilities/predict_test_meshes.py -config /path/to/config/file
+python utilities/predict_udf_test_meshes.py -config /path/to/config/file
 ```
+
+Use the script `utilities/predict_test_meshes.py` if you want to evaluate the Linear Transform as a standalone module.
 
 The script will generate output meshes and segmentations for each input image file.

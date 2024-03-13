@@ -21,5 +21,5 @@ model:
     first_layer_channels: 64
     downarm_channels: [64, 128, 256, 512, 512] # each downarm block halves the image dimension
 loss:
-    norm_type: 1 # chamfer distance in the L1 norm
+    norm_type: 1 # 1: L1 norm | 2: L2 norm
     chamfer_distance: 1 # weight of the chamfer distance loss

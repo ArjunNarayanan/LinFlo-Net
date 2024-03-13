@@ -1,0 +1,46 @@
+data:
+    train_folder: /path/to/train/data
+    validation_folder: /pth/to/validation/data
+    template_filename: data/template/highres_template.vtp
+    template_distance_map: data/template/highres_template_distance.vtk
+    output_folder: /path/to/output/folder
+train:
+    num_epochs: 50
+    batch_size: 1
+    optimizer:
+        lr: 5.e-5 # initial learning rate
+        weight_decay: 1.e-4
+    scheduler:
+        # see pytorch torch.optim.lr_scheduler.ReduceLROnPlateau for information on these arguments
+        factor: 0.9
+        patience: 5
+        threshold: 1.e-4
+        min_lr: 1.e-6
+model:
+    checkpoint: /path/to/checkpoint # provide path to a previous checkpoint if you are continuing training. If this is a fresh training run remove this line.
+    pretrained_linear_transform: /path/to/pretrained/linear/transform/checkpoint
+    encoder:
+        input_shape: 128
+        input_channels: 2
+        first_layer_channels: 32
+        downarm_channels: [32, 32, 64, 128, 256] # Channels at each resolution of the Unet downarm
+        uparm_channels: [256, 128, 64, 32, 32] # Channels at each resolution of Unet uparm
+    flow: # decoder head to produce 3D flow field
+        decoder_hidden_channels: 32
+        clip: 0.0075
+    segment: # model can be additionally supervised with segmentation loss
+        decoder_hidden_channels: 32
+        output_channels: 8
+    integrator:
+        num_steps: 50 # number of RK4 integration steps
+loss:
+    norm_type: 1 # 1: L1 norm, 2: L2 norm
+    # weights of the different loss functions
+    chamfer_distance: 1
+    chamfer_normal: 0.20
+    divergence: 0.005
+    edge: 50
+    normal: 1
+    laplace: 30
+    cross_entropy: 0 # set to nonzero to train with segmentation loss as well
+    dice: 0 # set to nonzero to train with segmentation loss as well
