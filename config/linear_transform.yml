@@ -1,0 +1,25 @@
+data:
+    train_folder: /path/to/train/data
+    validation_folder: /path/to/validation/data
+    template_filename: data/template/highres_template.vtp
+    output_folder: /path/to/output/folder
+train:
+    num_epochs: 50
+    batch_size: 2
+    optimizer:
+        lr: 1.e-4 # learning rate
+        weight_decay: 1.e-5
+    scheduler:
+        # see pytorch torch.optim.lr_scheduler.ReduceLROnPlateau for information on these arguments
+        factor: 0.9
+        patience: 5
+        threshold: 1.e-4
+        min_lr: 1.e-6
+model:
+    input_shape: 128 # image input shape [128,128,128]
+    input_channels: 1 # single channel input with normalized voxel intensity
+    first_layer_channels: 64
+    downarm_channels: [64, 128, 256, 512, 512] # each downarm block halves the image dimension
+loss:
+    norm_type: 1 # chamfer distance in the L1 norm
+    chamfer_distance: 1 # weight of the chamfer distance loss

@@ -126,17 +126,17 @@ def process_folder(im_folder, seg_folder, out_folder, modality, extension):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Prepare Images and Meshes")
-    parser.add_argument("-config", help="path to config file")
+    parser.add_argument("--image", help="path to image folder", required=True)
+    parser.add_argument("--segmentation", help="path to segmentation folder", required=True)
+    parser.add_argument("--output", help="path to output folder", required=True)
+    parser.add_argument("--modality", help="ct or mr", required=True)
+    parser.add_argument("--ext", help="file extension", default=".nii.gz")
     args = parser.parse_args()
 
-    config_fn = args.config
-    with open(config_fn, "r") as config_file:
-        config = yaml.safe_load(config_file)
-
-    im_folder = config["im_folder"]
-    seg_folder = config["seg_folder"]
-    out_folder = config["out_folder"]
-    modality = config["modality"]
-    extension = config["extension"]
+    im_folder = args.image
+    seg_folder = args.segmentation
+    out_folder = args.output
+    modality = args.modality
+    extension = args.ext
 
     process_folder(im_folder, seg_folder, out_folder, modality, extension)
