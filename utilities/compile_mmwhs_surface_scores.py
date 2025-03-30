@@ -10,9 +10,10 @@ def structure_to_output_name(name):
         return name
 
 
-def compile_results_for_structure(structure):
+def compile_results_for_structure(structure, indices):
     vals = []
-    for idx in range(1, 41):
+
+    for idx in indices:
         filename = modality + "_surface" + str(idx) + "_" + structure + ".xls"
         # print("Processing : ", filename)
         filepath = os.path.join(input_folder, filename)
@@ -56,7 +57,10 @@ if __name__ == "__main__":
     csv_structure_names = ["LV", "Epi", "RV", "LA", "RA", "LO", "PA", "WHS"]
     output_names = ["LV", "Epi", "RV", "LA", "RA", "Ao", "PA", "WH"]
 
-    sample_names = [modality + str(2000 + idx) for idx in range(1, 41)]
+    indices = range(1, 41)
+    indices = [3, 4, 5, 7, 9]
+
+    sample_names = [modality + str(2000 + idx) for idx in indices]
     assd_df = pd.DataFrame(sample_names, columns=["sample"])
     std_df = pd.DataFrame(sample_names, columns=["sample"])
     max_df = pd.DataFrame(sample_names, columns=["sample"])
@@ -64,7 +68,7 @@ if __name__ == "__main__":
     for idx, name in enumerate(csv_structure_names):
         output_structure_name = output_names[idx]
         print("Compiling results for structure ", output_structure_name)
-        structure_df = compile_results_for_structure(name)
+        structure_df = compile_results_for_structure(name, indices)
         assd_df[output_structure_name] = structure_df["Avg"]
         std_df[output_structure_name] = structure_df["Std"]
         max_df[output_structure_name] = structure_df["Max"]

@@ -25,6 +25,7 @@ def compile_dice_scores():
     all_samples = []
 
     indices = range(1, 41)
+    indices = [3,4,5,7,9]
     for idx in indices:
         filename = modality + "_" + "dice" + str(idx) + ".xls"
         input_file = os.path.join(input_folder, filename)
@@ -54,7 +55,8 @@ def compile_jaccard_scores():
     all_scores = []
     all_samples = []
 
-    indices = range(1, 41)
+    # indices = range(1, 41)
+    indices = [3,4,5,7,9]
     for idx in indices:
         filename = modality + "_" + "jaccard" + str(idx) + ".xls"
         input_file = os.path.join(input_folder, filename)
