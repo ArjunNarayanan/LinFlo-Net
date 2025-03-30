@@ -7,7 +7,7 @@ from scipy.spatial.distance import directed_hausdorff
 import glob
 
 
-def compute_distance(mesh1, mesh2, num_components=7):
+def compute_distance(mesh1, mesh2, num_components=5):
     assert len(mesh1) == num_components
     assert len(mesh2) == num_components
     distances = [directed_hausdorff(mesh1[idx], mesh2[idx]) for idx in range(num_components)]
@@ -29,6 +29,7 @@ if __name__ == "__main__":
     pred_folder = "/Users/arjunnarayanan/Documents/Research/Simcardio/Cardiovascular/cardiac-model-results/meshes"
     output_folder = "/Users/arjunnarayanan/Documents/Research/Simcardio/Cardiovascular/cardiac-model-results/distances"
     outputfile = "hausdorff_distance.csv"
+    num_mesh_components = 5 # might only need first 5 meshes for cardiac components
 
     extension = ".vtp"
 
