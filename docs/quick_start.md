@@ -5,7 +5,7 @@ Run heart mesh prediction from a CT or MR NIfTI scan using the `linflonet` CLI.
 ## Prerequisites
 
 - Python 3.10–3.12
-- A trained model checkpoint (`best_model.pth`)
+- Pre-trained model weights (`best_model.pth`) from [Zenodo](https://zenodo.org/records/20802633) ([DOI: 10.5281/zenodo.20802633](https://doi.org/10.5281/zenodo.20802633))
 - An input image (`.nii` or `.nii.gz`)
 - A GPU is recommended but not required (CPU fallback is supported)
 
@@ -54,9 +54,21 @@ pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorc
 pip install -e .
 ```
 
+## Download pre-trained weights
+
+Pre-trained weights for inference are hosted on [Zenodo](https://zenodo.org/records/20802633):
+
+```commandline
+curl -L -o LinFlo-Net_weights.zip \
+    "https://zenodo.org/records/20802633/files/LinFlo-Net_weights.zip?download=1"
+unzip LinFlo-Net_weights.zip
+```
+
+This extracts `best_model.pth` (~395 MB archive). The same checkpoint works for **CT** and **MR** scans; choose the modality at inference time with `--modality ct` or `--modality mr`.
+
 ## Predict a single image
 
-Provide your own model checkpoint and set `--modality` to match how the model was trained (`ct` or `mr`).
+Point `--model` at the downloaded checkpoint and set `--modality` to match your input image.
 
 ```commandline
 linflonet predict \
@@ -123,6 +135,6 @@ predict_images(config, ["/path/to/scan.nii.gz"], "/path/to/output")
 | `ModuleNotFoundError: No module named 'pytorch3d'` | Install `pytorch3d` after `torch` (see above) |
 | `ModuleNotFoundError: No module named 'torch'` during pytorch3d install | Use `--no-build-isolation` |
 | Template file not found | Use a bundled name (`whole_heart_with_ao.vtp`) or pass an absolute path with `--template` |
-| Missing `--model` / `--modality` | Pass both flags, or use `--config` |
+| Missing `--model` / `--modality` | Download weights from [Zenodo](https://zenodo.org/records/20802633), then pass both flags or use `--config` |
 
 For training, dataset preparation, and HPC setup, see the [main README](../README.md).

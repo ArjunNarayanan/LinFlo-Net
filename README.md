@@ -4,6 +4,8 @@
 
 **Install:** `pip install linflonet` ([PyPI](https://pypi.org/project/linflonet/))
 
+**Pre-trained weights:** [Zenodo](https://zenodo.org/records/20802633) ([DOI: 10.5281/zenodo.20802633](https://doi.org/10.5281/zenodo.20802633))
+
 A deep learning package to automatically generate simulation ready 3D meshes of the human heart from biomedical images. [Link to paper](https://asmedigitalcollection.asme.org/biomechanical/article/doi/10.1115/1.4064527/1194613).
 
 ![image](figures/flow-deformation-no-encoder.png)
@@ -25,6 +27,20 @@ built from source on most platforms. Install `torch` first, then:
 ```commandline
 pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 ```
+
+## Pre-trained model weights
+
+Pre-trained PyTorch weights for inference are available on [Zenodo](https://zenodo.org/records/20802633) ([DOI: 10.5281/zenodo.20802633](https://doi.org/10.5281/zenodo.20802633)).
+
+Download and extract the archive (~395 MB):
+
+```commandline
+curl -L -o LinFlo-Net_weights.zip \
+    "https://zenodo.org/records/20802633/files/LinFlo-Net_weights.zip?download=1"
+unzip LinFlo-Net_weights.zip
+```
+
+This provides `best_model.pth`, the best validation checkpoint from training the full LinFlo-Net architecture (linear transform + flow deformation with signed-distance supervision). The same checkpoint is used for **CT** and **MR** inputs; set the modality at inference time with `--modality ct` or `--modality mr`.
 
 ## CLI usage
 
@@ -183,24 +199,30 @@ python workflows/train_flow_with_udf.py -config /path/to/config/file
 
 ## Using trained models on new data
 
-The pre-trained model takes as input a CT image in NIFTI format, a template mesh in VTP format and outputs a deformed mesh in VTP format.
+Download the pre-trained weights from [Zenodo](https://zenodo.org/records/20802633) (see [Pre-trained model weights](#pre-trained-model-weights) above), then run prediction with the `linflonet` CLI. The model takes a CT or MR image in NIfTI format and outputs a deformed heart mesh (`.vtp`) and a segmentation rasterized to image space. Template mesh and distance map are bundled with the package.
 
-First, place your image data in a folder named `image`. Let the path to this folder be `/path/to/folder/image`. Make sure that the images have extension `.nii.gz` or `.nii`. Next, run the following command to build an index of the image dataset,
+**Single image:**
 
-```
-python utilities/prepare_test_data_csv.py -f /path/to/folder
-```
-
-Note that the argument to `-f` is the path to the **parent** directory of the `image` directory.
-
-After generating the index, it's time to execute the model.
-
-Take a look at the example config file `config/predict_test_meshes_ct.yml`. Modify the path to the model, path to the image dataset, and the path to your output directory. Next, run the prediction script,
-
-```
-python utilities/predict_udf_test_meshes.py -config /path/to/config/file
+```commandline
+linflonet predict \
+    --image /path/to/scan.nii.gz \
+    --model /path/to/best_model.pth \
+    --modality ct \
+    --output /path/to/output
 ```
 
-Use the script `utilities/predict_test_meshes.py` if you want to evaluate the Linear Transform as a standalone module.
+**Folder of images** (flat folder or `image/` subdirectory):
 
-The script will generate output meshes and segmentations for each input image file.
+```commandline
+linflonet predict \
+    --folder /path/to/images \
+    --model /path/to/best_model.pth \
+    --modality mr \
+    --output /path/to/output
+```
+
+See the [Quick start guide](docs/quick_start.md) for full install and usage details.
+
+### Legacy prediction scripts
+
+The repository also includes YAML-driven workflows used during development. Place images in a folder named `image`, build an index with `utilities/prepare_test_data_csv.py`, then run `utilities/predict_udf_test_meshes.py` with a config such as `config/predict_test_meshes_ct.yml`. Use `utilities/predict_test_meshes.py` to evaluate the linear transform module alone.
