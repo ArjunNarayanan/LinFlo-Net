@@ -12,12 +12,14 @@ job_scripts/*
 *.csv
 *.xlsx
 *.pth
-*.vtp
 *.stl
 *.vti
 *.vtk
-*.png
+!linflonet/data/template/
+!linflonet/data/template/**
 *.gz
 *.xls
 *.pdf
 *.mlp
+build/
+*.egg-info/

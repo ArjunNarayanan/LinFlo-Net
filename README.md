@@ -1,77 +1,74 @@
 # LinFlo-Net
 
+**New to LinFlo-Net?** See the [Quick start guide](docs/quick_start.md) for install and prediction in a few minutes.
+
+**Install:** `pip install linflonet` ([PyPI](https://pypi.org/project/linflonet/))
+
 A deep learning package to automatically generate simulation ready 3D meshes of the human heart from biomedical images. [Link to paper](https://asmedigitalcollection.asme.org/biomechanical/article/doi/10.1115/1.4064527/1194613).
 
 ![image](figures/flow-deformation-no-encoder.png)
 
 
-## Setting up environment on Savio
+For SLURM-based clusters (e.g. Berkeley Savio), see [Setting up environment on Savio](docs/savio_setup.md).
 
-The following instructions can set up a conda environment on the Berkeley Research Computing Savio system. But a similar approach can be used on any SLURM based high-performance computing cluster.
+## Install from PyPI
 
-Since Savio provides limited space in your home directory, we install all conda packages to our scratch folder.
-
-```commandline
-module load cuda/10.2
-module load gcc/5.4.0
-ENVDIR=/global/scratch/users/<your_username>/environments/linflonet
-rm -rf $ENVDIR
-export CONDA_PKGS_DIRS=/global/scratch/users/<your_username>/tmp/.conda
-conda create --prefix $ENVDIR
-```
-
-Press `y` when prompted to create your conda environment and then activate your environment,
+For prediction only (Python 3.10+), install from [PyPI](https://pypi.org/project/linflonet/):
 
 ```commandline
-source activate $ENVDIR
+pip install linflonet
 ```
 
-Next install `pytorch`. Savio does not have the version of `cuda` required for the latest pytorch version, so we will install `pytorch 1.12.1`.
+`pytorch3d` is required but not listed as a pip dependency because it must be
+built from source on most platforms. Install `torch` first, then:
 
 ```commandline
-conda install pytorch==1.12.1 cudatoolkit=10.2 -c pytorch
+pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git@stable"
 ```
 
-Press `y` when prompted to start the installation.
+## CLI usage
 
-Next we will install [pytorch3d](https://pytorch3d.org/) which provides several useful routines for dealing with 3D data and mesh data-structures in conjunction with `pytorch`,
+The `linflonet` command generates heart meshes (`.vtp`) and segmentations for
+CT or MR NIfTI images.
+
+**Single image:**
 
 ```commandline
-conda install -c fvcore -c iopath -c conda-forge fvcore iopath
-conda install -c bottler nvidiacub
-conda install pytorch3d -c pytorch3d
+linflonet predict \
+    --image /path/to/scan.nii.gz \
+    --model /path/to/best_model.pth \
+    --modality ct \
+    --output /path/to/output
 ```
 
-You can find all the other dependencies in the system generated `requirements.txt` in the repository. You should be able to install these directly with `pip` after installing the above packages.
-
-### Test that everything works
-
-First request a brief interactive session with a GPU,
+**Folder of images** (flat folder or `image/` subdirectory):
 
 ```commandline
-srun --pty -A <account_name> -p savio3_gpu --nodes=1 --gres=gpu:GTX2080TI:1 --ntasks=1 --cpus-per-task=2 -t 00:30:00 bash -i
+linflonet predict \
+    --folder /path/to/images \
+    --model /path/to/best_model.pth \
+    --modality mr \
+    --output /path/to/output
 ```
 
-Once your resources are allocated, load your conda environment and launch python
+Template mesh and distance map default to files bundled with the package. Override
+with `--template` and `--template-distance-map` if needed. For linear-transform-only
+models, pass `--linear-transform`.
+
+**Using a YAML config** (same format as `config/predict_single_ct.yml`):
 
 ```commandline
-source activate /global/scratch/users/<your_username>/environments/linflonet
-python
+linflonet predict --config config/predict_single_ct.yml --image /path/to/scan.nii.gz -o /path/to/output
 ```
 
-Now type the following into your python session,
+Outputs are written to `<output>/meshes/` and `<output>/segmentation/`.
 
-```python
-import torch
-from pytorch3d.loss import chamfer_distance
-device = torch.device("cuda")
+You can also run `python -m linflonet predict ...` or install in editable mode
+from a git checkout:
 
-a = torch.rand([5,10000,3]).to(device)
-b = torch.rand([5,10000,3]).to(device)
-loss = chamfer_distance(a, b)
+```commandline
+pip install -e .
 ```
-
-If everything runs without error, you are all set!
 
 ## Setting up a local environment with pip (Python 3.12)
 

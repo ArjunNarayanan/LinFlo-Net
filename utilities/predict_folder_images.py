@@ -1,11 +1,12 @@
 import os
-import sys
-import yaml
 import argparse
 
-sys.path.append(os.getcwd())
-from utilities.prepare_test_data_csv import make_file_index, filename_stem
-from utilities.predict_test_meshes import create_prediction, write_one_mesh
+from linflonet.predict import (
+    PredictionConfig,
+    filename_stem,
+    find_image_files,
+    predict_images,
+)
 
 
 def main():
@@ -20,18 +21,14 @@ def main():
     folder = os.path.abspath(args.folder)
     assert os.path.isdir(folder), "Did not find folder " + folder
 
-    image_files, _ = make_file_index(folder, int(args.n), args.extension)
+    image_files = find_image_files(folder, args.extension)
+    if int(args.n) >= 0:
+        image_files = image_files[: int(args.n)]
+    assert image_files, "Did not find any images in " + folder
 
-    with open(args.config, "r") as config_file:
-        config = yaml.safe_load(config_file)
-
+    pred_config = PredictionConfig.from_yaml(args.config)
     out_dir = args.output_dir or folder
-    prediction, output_extension = create_prediction(config, out_dir)
-
-    for image_fn in image_files:
-        filename = filename_stem(image_fn, args.extension)
-        print("Processing file : ", filename)
-        write_one_mesh(prediction, image_fn, filename, output_extension)
+    predict_images(pred_config, image_files, out_dir, extension=args.extension)
 
 
 if __name__ == "__main__":
