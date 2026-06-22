@@ -1,6 +1,6 @@
 # LinFlo-Net
 
-**New to LinFlo-Net?** See the [Quick start guide](docs/quick_start.md) for install and prediction in a few minutes.
+**New to LinFlo-Net?** See the [Quick start guide](https://github.com/ArjunNarayanan/LinFlo-Net/blob/main/docs/quick_start.md) for install and prediction in a few minutes.
 
 **Install:** `pip install linflonet` ([PyPI](https://pypi.org/project/linflonet/))
 
@@ -8,10 +8,10 @@
 
 A deep learning package to automatically generate simulation ready 3D meshes of the human heart from biomedical images. [Link to paper](https://asmedigitalcollection.asme.org/biomechanical/article/doi/10.1115/1.4064527/1194613).
 
-![image](figures/flow-deformation-no-encoder.png)
+![image](https://raw.githubusercontent.com/ArjunNarayanan/LinFlo-Net/main/figures/flow-deformation-no-encoder.png)
 
 
-For SLURM-based clusters (e.g. Berkeley Savio), see [Setting up environment on Savio](docs/savio_setup.md).
+For SLURM-based clusters (e.g. Berkeley Savio), see [Setting up environment on Savio](https://github.com/ArjunNarayanan/LinFlo-Net/blob/main/docs/savio_setup.md).
 
 ## Install from PyPI
 
@@ -221,7 +221,7 @@ linflonet predict \
     --output /path/to/output
 ```
 
-See the [Quick start guide](docs/quick_start.md) for full install and usage details.
+See the [Quick start guide](https://github.com/ArjunNarayanan/LinFlo-Net/blob/main/docs/quick_start.md) for full install and usage details.
 
 ### Legacy prediction scripts
 
