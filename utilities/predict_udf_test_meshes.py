@@ -112,7 +112,7 @@ if __name__ == "__main__":
 
     info = config["info"]
     model_fn = config["files"]["model"]
-    model = torch.load(model_fn, map_location=torch.device("cpu"))["model"]
+    model = torch.load(model_fn, map_location=torch.device("cpu"), weights_only=False)["model"]
     model.to(device)
 
     template_fn = config["files"]["template"]

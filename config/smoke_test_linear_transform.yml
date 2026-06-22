@@ -1,0 +1,25 @@
+data:
+    train_folder: test/smoke_train_data/train
+    validation_folder: test/smoke_train_data/val
+    template_filename: data/template/highres_template.vtp
+    output_folder: test/smoke_train_data/output
+train:
+    num_epochs: 1
+    batch_size: 1
+    eval_frequency: 1.0
+    optimizer:
+        lr: 1.e-4
+        weight_decay: 1.e-5
+    scheduler:
+        factor: 0.9
+        patience: 5
+        threshold: 1.e-4
+        min_lr: 1.e-6
+model:
+    input_shape: 16        # must match --input_shape used to generate the data
+    input_channels: 1
+    first_layer_channels: 8
+    downarm_channels: [8, 16]   # input_shape // 2**len(downarm) must be > 2
+loss:
+    norm_type: 1
+    chamfer_distance: 1

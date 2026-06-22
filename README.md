@@ -73,6 +73,32 @@ loss = chamfer_distance(a, b)
 
 If everything runs without error, you are all set!
 
+## Setting up a local environment with pip (Python 3.12)
+
+If you only need to run prediction (not training), you can set up a lightweight
+environment on Python 3.12 using `requirements-py312.txt`.
+
+First, initialize the `vtk_utils` submodule and create a virtual environment,
+
+```commandline
+git submodule update --init
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-py312.txt
+```
+
+`pytorch3d` does not ship prebuilt wheels for most platforms and must be built
+from source *after* `torch` is installed. Its `setup.py` imports `torch` at build
+time, so you must disable pip's build isolation (otherwise you get
+`ModuleNotFoundError: No module named 'torch'`):
+
+```commandline
+pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+```
+
+On macOS, make sure the Xcode command-line tools are installed first
+(`xcode-select --install`) so the C++ extension can compile.
+
 ## Dataset Creation
 
 We use the multi-modality whole heart segmentation challenge (MMWHS) [dataset](https://zmiclab.github.io/zxh/0/mmwhs/). Download and unzip the data. You should have the following folders,

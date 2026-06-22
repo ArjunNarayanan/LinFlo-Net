@@ -1,7 +1,8 @@
 import os
 
 import pandas as pd
-
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.template import Template
 from scipy.spatial.distance import directed_hausdorff
 import glob
@@ -25,9 +26,9 @@ def compute_all_distances(gt_files, pred_files):
 
 
 if __name__ == "__main__":
-    gt_folder = "/Users/arjunnarayanan/Documents/Research/Simcardio/Datasets/Cardiovascular/ct/meshes"
-    pred_folder = "/Users/arjunnarayanan/Documents/Research/Simcardio/Cardiovascular/cardiac-model-results/meshes"
-    output_folder = "/Users/arjunnarayanan/Documents/Research/Simcardio/Cardiovascular/cardiac-model-results/distances"
+    gt_folder = "/Users/numisveins/Documents/data_papers/data_combo_paper/ct_data/gt_cardiac_segs/surfaces/"
+    pred_folder = "/Users/numisveins/Documents/data_papers/data_combo_paper/ct_data/meshes/"
+    output_folder = "/Users/numisveins/Documents/data_papers/data_combo_paper/ct_data/hausdorff_distances/"
     outputfile = "hausdorff_distance.csv"
     num_mesh_components = 5 # might only need first 5 meshes for cardiac components
 

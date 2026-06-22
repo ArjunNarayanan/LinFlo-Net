@@ -1,0 +1,32 @@
+# Minimal dependencies to run PREDICTION on Python 3.12.
+# (Training / plotting / data-augmentation extras are intentionally excluded.)
+#
+# Derived from the actual import chain of the prediction scripts:
+#   utilities/predict_test_meshes.py / predict_udf_test_meshes.py
+#     -> src.template, src.io_utils, src.pre_process, vtk_utils.vtk_utils
+#     -> unpickling best_model.pth imports src.segment_flow
+#        -> src.linear_transform -> monai
+#
+# NOTE: vtk_utils is a git submodule. Before running, initialize it with:
+#   git submodule update --init
+
+# --- numerics (numpy pinned <2: code predates the NumPy 2.0 API changes) ---
+numpy<2,>=1.26.0
+pandas>=2.1.1
+
+# --- deep learning ---
+torch>=2.2.0
+monai>=1.3.0
+
+# --- imaging / mesh I/O ---
+SimpleITK>=2.3.1
+vtk>=9.3.0
+
+# --- config parsing ---
+PyYAML>=6.0.1
+
+# --- pytorch3d ---
+# No prebuilt wheels for most platforms; build from source AFTER installing torch:
+#   pip install "git+https://github.com/facebookresearch/pytorch3d.git@stable"
+# macOS builds CPU/MPS only (no CUDA). See:
+# https://github.com/facebookresearch/pytorch3d/blob/main/INSTALL.md

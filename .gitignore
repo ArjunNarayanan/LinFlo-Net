@@ -1,4 +1,7 @@
 venv
+.venv*
+.venv/
+venv*
 .idea
 __pycache__/
 *.out

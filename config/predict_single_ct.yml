@@ -1,0 +1,9 @@
+info:
+  input_size: [128, 128, 128] # input image dimensions
+files:
+  model: model/best_model.pth # path to trained CT model checkpoint
+  template: data/template/whole_heart_with_ao.vtp
+  template_distance_map: data/template/highres_template_distance.vtk
+  output_dir: /path/to/output/folder # optional, can override with -o
+  output_extension: .nii.gz # .nii.gz or .vti
+modality: ct

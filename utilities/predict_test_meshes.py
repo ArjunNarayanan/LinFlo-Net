@@ -74,29 +74,57 @@ class Prediction:
         self.segmentation = vtu.multiclass_convert_polydata_to_imagedata(self.prediction, ref_img)
 
 
+def write_one_mesh(prediction, image_fn, filename, output_extension):
+    prediction.set_image_info(image_fn)
+    prediction.predict_mesh()
+
+    mesh_fn = os.path.join(prediction.out_dir, "meshes", filename + ".vtp")
+    vtu.write_vtk_polydata(prediction.prediction, mesh_fn)
+
+    prediction.mesh_to_segmentation()
+
+    if output_extension == ".vti":
+        seg_fn = os.path.join(prediction.out_dir, "segmentation", filename + ".vti")
+        vtu.write_vtk_image(prediction.segmentation, seg_fn)
+    elif output_extension == ".nii.gz":
+        seg_fn = os.path.join(prediction.out_dir, "segmentation", filename + ".nii.gz")
+        ref_im, M = vtu.exportSitk2VTK(prediction.original_image)
+        print("Writing nifti with name: ", seg_fn)
+        vtu.vtk_write_mask_as_nifty(prediction.segmentation, M, prediction.image_fn, seg_fn)
+    else:
+        raise ValueError("Unexpected output format type : ", output_extension)
+
+
+def create_prediction(config, out_dir):
+    info = config["info"]
+    model_fn = config["files"]["model"]
+    model = torch.load(model_fn, map_location=torch.device("cpu"), weights_only=False)["model"]
+    model.to(device)
+
+    template_fn = config["files"]["template"]
+    faceids_name = config["files"].get("faceids_name", None)
+    template = Template.from_vtk(template_fn, faceids_name=faceids_name)
+
+    output_extension = config["files"]["output_extension"]
+    modality = config["modality"]
+
+    meshes_dir = os.path.join(out_dir, "meshes")
+    if not os.path.isdir(meshes_dir):
+        os.makedirs(meshes_dir)
+    seg_dir = os.path.join(out_dir, "segmentation")
+    if not os.path.isdir(seg_dir):
+        os.makedirs(seg_dir)
+
+    prediction = Prediction(info, model, template, out_dir, modality)
+    return prediction, output_extension
+
+
 def write_all_meshes(root_dir, extension, index, prediction, output_extension):
     for filename in index["file_name"]:
         image_fn = os.path.join(root_dir, "image", filename + extension)
         assert os.path.isfile(image_fn), "Did not find file " + image_fn
 
-        prediction.set_image_info(image_fn)
-        prediction.predict_mesh()
-
-        mesh_fn = os.path.join(prediction.out_dir, "meshes", filename + ".vtp")
-        vtu.write_vtk_polydata(prediction.prediction, mesh_fn)
-
-        prediction.mesh_to_segmentation()
-
-        if output_extension == ".vti":
-            seg_fn = os.path.join(prediction.out_dir, "segmentation", filename + ".vti")
-            vtu.write_vtk_image(prediction.segmentation, seg_fn)
-        elif output_extension == ".nii.gz":
-            seg_fn = os.path.join(prediction.out_dir, "segmentation", filename + ".nii.gz")
-            ref_im, M = vtu.exportSitk2VTK(prediction.original_image)
-            print("Writing nifti with name: ", seg_fn)
-            vtu.vtk_write_mask_as_nifty(prediction.segmentation, M, prediction.image_fn, seg_fn)
-        else:
-            raise ValueError("Unexpected output format type : ", output_extension)
+        write_one_mesh(prediction, image_fn, filename, output_extension)
 
 
 
@@ -110,34 +138,17 @@ if __name__ == "__main__":
     with open(config_fn, "r") as config_file:
         config = yaml.safe_load(config_file)
 
-    info = config["info"]
-    model_fn = config["files"]["model"]
-    model = torch.load(model_fn, map_location=torch.device("cpu"))["model"]
-    model.to(device)
-
-    template_fn = config["files"]["template"]
-    faceids_name = config["files"].get("faceids_name", None)
-    template = Template.from_vtk(template_fn, faceids_name=faceids_name)
     root_dir = config["files"]["root_dir"]
     extension = config["files"]["extension"]
-    output_extension = config["files"]["output_extension"]
 
-    default_out_dir = os.path.join(os.path.dirname(model_fn), "evaluation")
+    default_out_dir = os.path.join(os.path.dirname(config["files"]["model"]), "evaluation")
     out_dir = config["files"].get("output_dir", default_out_dir)
 
-    meshes_dir = os.path.join(out_dir, "meshes")
-    if not os.path.isdir(meshes_dir):
-        os.makedirs(meshes_dir)
-    seg_dir = os.path.join(out_dir, "segmentation")
-    if not os.path.isdir(seg_dir):
-        os.makedirs(seg_dir)
+    prediction, output_extension = create_prediction(config, out_dir)
 
     index_fn = os.path.join(root_dir, "index.csv")
     assert os.path.isfile(index_fn), "Did not find index file at " + index_fn
 
     index = pd.read_csv(index_fn)
-
-    modality = config["modality"]
-    prediction = Prediction(info, model, template, out_dir, modality)
 
     write_all_meshes(root_dir, extension, index, prediction, output_extension)
