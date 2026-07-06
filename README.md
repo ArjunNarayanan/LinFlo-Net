@@ -40,19 +40,25 @@ curl -L -o LinFlo-Net_weights.zip \
 unzip LinFlo-Net_weights.zip
 ```
 
-This provides `best_model.pth`, the best validation checkpoint from training the full LinFlo-Net architecture (linear transform + flow deformation with signed-distance supervision). The same checkpoint is used for **CT** and **MR** inputs; set the modality at inference time with `--modality ct` or `--modality mr`.
+This provides `best_model.pth`, the combined-4 LT+flow checkpoint (linear transform + flow deformation). Place it at `model/best_model.pth`. The same checkpoint is used for **CT** and **MR** inputs; set the modality at inference time with `--modality ct` or `--modality mr`.
 
 ## CLI usage
 
 The `linflonet` command generates heart meshes (`.vtp`) and segmentations for
-CT or MR NIfTI images.
+CT or MR images using the combined-4 LT+flow checkpoint.
+
+**Batch prediction (config-driven):**
+
+```commandline
+linflonet predict --config config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml
+```
 
 **Single image:**
 
 ```commandline
 linflonet predict \
     --image /path/to/scan.nii.gz \
-    --model /path/to/best_model.pth \
+    --model model/best_model.pth \
     --modality ct \
     --output /path/to/output
 ```
@@ -62,16 +68,12 @@ linflonet predict \
 ```commandline
 linflonet predict \
     --folder /path/to/images \
-    --model /path/to/best_model.pth \
+    --model model/best_model.pth \
     --modality mr \
     --output /path/to/output
 ```
 
-Template mesh and distance map default to files bundled with the package. Override
-with `--template` and `--template-distance-map` if needed. For linear-transform-only
-models, pass `--linear-transform`.
-
-**Using a YAML config** (same format as `config/predict_single_ct.yml`):
+**Using a YAML config** (see `config/predict_single_ct.yml` or `config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml`):
 
 ```commandline
 linflonet predict --config config/predict_single_ct.yml --image /path/to/scan.nii.gz -o /path/to/output
@@ -199,14 +201,20 @@ python workflows/train_flow_with_udf.py -config /path/to/config/file
 
 ## Using trained models on new data
 
-Download the pre-trained weights from [Zenodo](https://zenodo.org/records/20802633) (see [Pre-trained model weights](#pre-trained-model-weights) above), then run prediction with the `linflonet` CLI. The model takes a CT or MR image in NIfTI format and outputs a deformed heart mesh (`.vtp`) and a segmentation rasterized to image space. Template mesh and distance map are bundled with the package.
+Download the pre-trained weights from [Zenodo](https://zenodo.org/records/20802633) (see [Pre-trained model weights](#pre-trained-model-weights) above) and place them at `model/best_model.pth`. The model takes a CT or MR image and outputs a deformed heart mesh (`.vtp`) and a segmentation rasterized to image space.
+
+**Batch prediction:**
+
+```commandline
+linflonet predict --config config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml
+```
 
 **Single image:**
 
 ```commandline
 linflonet predict \
     --image /path/to/scan.nii.gz \
-    --model /path/to/best_model.pth \
+    --model model/best_model.pth \
     --modality ct \
     --output /path/to/output
 ```
@@ -216,7 +224,7 @@ linflonet predict \
 ```commandline
 linflonet predict \
     --folder /path/to/images \
-    --model /path/to/best_model.pth \
+    --model model/best_model.pth \
     --modality mr \
     --output /path/to/output
 ```
@@ -225,4 +233,11 @@ See the [Quick start guide](https://github.com/ArjunNarayanan/LinFlo-Net/blob/ma
 
 ### Legacy prediction scripts
 
-The repository also includes YAML-driven workflows used during development. Place images in a folder named `image`, build an index with `utilities/prepare_test_data_csv.py`, then run `utilities/predict_udf_test_meshes.py` with a config such as `config/predict_test_meshes_ct.yml`. Use `utilities/predict_test_meshes.py` to evaluate the linear transform module alone.
+The repository also includes YAML-driven workflows used during development. For the combined-4 LT+flow checkpoint, the CLI replaces:
+
+```commandline
+python utilities/prepare_test_data_csv.py -f data_coro -e .mha
+python utilities/predict_test_meshes.py -config config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml
+```
+
+Research-only scripts such as `utilities/predict_udf_test_meshes.py` remain in the repo but are not exposed via the CLI.

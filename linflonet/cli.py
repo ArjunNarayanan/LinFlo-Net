@@ -7,7 +7,7 @@ import os
 import sys
 
 from linflonet import __version__
-from linflonet.paths import bundled_template, resolve_template_path
+from linflonet.paths import resolve_template_path
 from linflonet.predict import (
     PredictionConfig,
     find_image_files,
@@ -38,7 +38,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--image",
         action="append",
         dest="images",
-        help="Path to a single input image (.nii or .nii.gz). Repeat for multiple files.",
+        help="Path to a single input image. Repeat for multiple files.",
     )
     predict.add_argument(
         "-f",
@@ -62,22 +62,13 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     predict.add_argument(
         "--template",
-        help="Path to template mesh (.vtp). Defaults to bundled whole-heart template.",
-    )
-    predict.add_argument(
-        "--template-distance-map",
-        help="Path to template distance map (.vtk or .pth) for flow models",
-    )
-    predict.add_argument(
-        "--linear-transform",
-        action="store_true",
-        help="Use a linear-transform-only model (skip template distance map)",
+        help="Path to template mesh (.vtp). Defaults to data/template/whole_heart_with_ao.vtp.",
     )
     predict.add_argument(
         "-e",
         "--extension",
-        default=".nii.gz",
-        help="Input image file extension (default: .nii.gz)",
+        default=None,
+        help="Input image file extension (default: .nii.gz, or files.extension in config)",
     )
     predict.add_argument(
         "--output-extension",
@@ -95,25 +86,20 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _resolve_config(args: argparse.Namespace) -> tuple[PredictionConfig, str]:
+def _resolve_config(args: argparse.Namespace) -> PredictionConfig:
     if args.config:
-        config = PredictionConfig.from_yaml(args.config)
+        try:
+            config = PredictionConfig.from_yaml(args.config)
+        except ValueError as exc:
+            raise SystemExit(str(exc)) from exc
         if args.model:
             config.model = args.model
         if args.modality:
             config.modality = args.modality
         if args.template:
             config.template = resolve_template_path(args.template)
-        if args.template_distance_map:
-            config.template_distance_map = resolve_template_path(args.template_distance_map)
         if args.output_extension:
             config.output_extension = args.output_extension
-        if args.linear_transform:
-            if args.template_distance_map:
-                raise SystemExit(
-                    "--linear-transform cannot be combined with --template-distance-map"
-                )
-            config.template_distance_map = None
     else:
         missing = []
         if not args.model:
@@ -126,84 +112,88 @@ def _resolve_config(args: argparse.Namespace) -> tuple[PredictionConfig, str]:
                 f"Missing: {', '.join(missing)}"
             )
 
-        template_distance_map = None
-        if args.linear_transform:
-            if args.template_distance_map:
-                raise SystemExit(
-                    "--linear-transform cannot be combined with --template-distance-map"
-                )
-        elif args.template_distance_map:
-            template_distance_map = resolve_template_path(args.template_distance_map)
-        else:
-            template_distance_map = bundled_template("highres_template_distance.vtk")
-
         config = PredictionConfig(
             model=args.model,
             template=resolve_template_path(
-                args.template or bundled_template("whole_heart_with_ao.vtp")
+                args.template or "data/template/whole_heart_with_ao.vtp"
             ),
             modality=args.modality,
-            template_distance_map=template_distance_map,
             output_extension=args.output_extension,
         )
 
-    if args.output:
-        out_dir = args.output
-    elif args.images and len(args.images) == 1 and not args.folder:
-        out_dir = os.path.dirname(os.path.abspath(args.images[0]))
-    elif args.folder:
-        out_dir = args.folder
-    else:
-        out_dir = "."
+    return config
 
-    return config, out_dir
+
+def _resolve_extension(args: argparse.Namespace, config: PredictionConfig) -> str:
+    if args.extension is not None:
+        return args.extension
+    return config.extension
+
+
+def _resolve_output_dir(
+    args: argparse.Namespace, config: PredictionConfig, folder: str | None
+) -> str:
+    if args.output:
+        return args.output
+    if config.output_dir:
+        return config.output_dir
+    if args.images and len(args.images) == 1 and not folder:
+        return os.path.dirname(os.path.abspath(args.images[0]))
+    if folder:
+        return folder
+    if config.root_dir:
+        return config.root_dir
+    return "."
 
 
 def _run_predict(args: argparse.Namespace) -> None:
-    if not args.images and not args.folder:
-        raise SystemExit("Provide --image and/or --folder.")
+    config = _resolve_config(args)
+    folder = args.folder or config.root_dir
+    extension = _resolve_extension(args, config)
+
+    if not args.images and not folder:
+        raise SystemExit(
+            "Provide --folder/--image or set files.root_dir in --config."
+        )
 
     if args.images:
         for image_fn in args.images:
             if not os.path.isfile(image_fn):
                 raise SystemExit(f"Did not find image file: {image_fn}")
 
-    if args.folder and not os.path.isdir(args.folder):
-        raise SystemExit(f"Did not find folder: {args.folder}")
+    if folder and not os.path.isdir(folder):
+        raise SystemExit(f"Did not find folder: {folder}")
 
-    config, out_dir = _resolve_config(args)
+    out_dir = _resolve_output_dir(args, config, folder)
 
-    if args.images and args.folder:
+    if args.images and folder:
         image_files = list(args.images)
-        image_files.extend(find_image_files(args.folder, args.extension))
+        image_files.extend(find_image_files(folder, extension))
     elif args.images:
         image_files = args.images
-    elif args.folder:
-        predict_folder(
-            config,
-            args.folder,
-            out_dir,
-            extension=args.extension,
-            max_files=args.n,
-        )
-        return
     else:
-        raise SystemExit("Provide --image and/or --folder.")
+        try:
+            predict_folder(
+                config,
+                folder,
+                out_dir,
+                extension=extension,
+                max_files=args.n,
+            )
+        except FileNotFoundError as exc:
+            raise SystemExit(str(exc)) from exc
+        return
 
     if args.n >= 0:
         image_files = image_files[: args.n]
 
-    predict_images(config, image_files, out_dir, extension=args.extension)
+    predict_images(config, image_files, out_dir, extension=extension)
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = _build_parser()
     args = parser.parse_args(argv)
-
-    if args.command == "predict":
-        _run_predict(args)
-    else:
-        parser.error(f"Unknown command: {args.command}")
+    _run_predict(args)
 
 
 if __name__ == "__main__":

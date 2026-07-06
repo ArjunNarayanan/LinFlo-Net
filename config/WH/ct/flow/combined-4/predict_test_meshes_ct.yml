@@ -2,10 +2,10 @@ info:
   input_size: [128, 128, 128]
   num_mesh: 7
 files:
-  extension: .nii.gz
+  extension: .mha
   model: model/best_model.pth
   template: data/template/whole_heart_with_ao.vtp
-  root_dir: /path/to/base/directory/of/input/images
-  output_dir: /path/to/output/folder
+  root_dir: data_coro
+  output_dir: output/predict/data_coro
   output_extension: .nii.gz
 modality: ct

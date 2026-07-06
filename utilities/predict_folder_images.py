@@ -1,5 +1,8 @@
+"""Deprecated: use ``linflonet predict --folder ...`` instead. See docs/quick_start.md."""
+
 import os
 import argparse
+import warnings
 
 from linflonet.predict import (
     PredictionConfig,
@@ -32,4 +35,10 @@ def main():
 
 
 if __name__ == "__main__":
+    warnings.warn(
+        "utilities/predict_folder_images.py is deprecated; use "
+        "'linflonet predict --folder ...' instead.",
+        DeprecationWarning,
+        stacklevel=1,
+    )
     main()

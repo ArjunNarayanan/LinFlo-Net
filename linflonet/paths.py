@@ -6,7 +6,6 @@ from importlib import resources
 BUNDLED_TEMPLATES = {
     "whole_heart_with_ao.vtp",
     "highres_template.vtp",
-    "highres_template_distance.vtk",
 }
 
 

@@ -1,3 +1,5 @@
+"""Deprecated: use ``linflonet predict --config ...`` instead. See docs/quick_start.md."""
+
 import torch
 import numpy as np
 import SimpleITK as sitk
@@ -6,6 +8,7 @@ import sys
 import pandas as pd
 import yaml
 import argparse
+import warnings
 
 sys.path.append(os.getcwd())
 import src.pre_process as pre
@@ -130,6 +133,12 @@ def write_all_meshes(root_dir, extension, index, prediction, output_extension):
 
 
 if __name__ == "__main__":
+    warnings.warn(
+        "utilities/predict_test_meshes.py is deprecated; use "
+        "'linflonet predict --config ...' instead (no index.csv required).",
+        DeprecationWarning,
+        stacklevel=1,
+    )
     parser = argparse.ArgumentParser(description="Predict meshes on test images")
     parser.add_argument("-config", help="path to config file")
     args = parser.parse_args()

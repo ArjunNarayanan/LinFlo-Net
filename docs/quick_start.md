@@ -1,12 +1,12 @@
 # Quick start
 
-Run heart mesh prediction from a CT or MR NIfTI scan using the `linflonet` CLI.
+Run heart mesh prediction from CT or MR images using the `linflonet` CLI (linear transform + flow deformation).
 
 ## Prerequisites
 
 - Python 3.10–3.12
-- Pre-trained model weights (`best_model.pth`) from [Zenodo](https://zenodo.org/records/20802633) ([DOI: 10.5281/zenodo.20802633](https://doi.org/10.5281/zenodo.20802633))
-- An input image (`.nii` or `.nii.gz`)
+- Pre-trained weights (`best_model.pth`) from [Zenodo](https://zenodo.org/records/20802633) ([DOI: 10.5281/zenodo.20802633](https://doi.org/10.5281/zenodo.20802633))
+- Input images (e.g. `.mha`, `.nii`, or `.nii.gz`)
 - A GPU is recommended but not required (CPU fallback is supported)
 
 ## Install
@@ -62,48 +62,54 @@ Pre-trained weights for inference are hosted on [Zenodo](https://zenodo.org/reco
 curl -L -o LinFlo-Net_weights.zip \
     "https://zenodo.org/records/20802633/files/LinFlo-Net_weights.zip?download=1"
 unzip LinFlo-Net_weights.zip
+mv best_model.pth model/best_model.pth
 ```
 
-This extracts `best_model.pth` (~395 MB archive). The same checkpoint works for **CT** and **MR** scans; choose the modality at inference time with `--modality ct` or `--modality mr`.
+This is the combined-4 LT+flow checkpoint (~395 MB archive). The same weights work for **CT** and **MR** scans; set the modality at inference time with `--modality ct` or `--modality mr`.
+
+## Batch prediction (recommended)
+
+Place images in `data_coro/` (flat folder or `data_coro/image/`) and run:
+
+```commandline
+linflonet predict --config config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml
+```
+
+This reads `root_dir`, `extension`, `model`, and `output_dir` from the config. Outputs:
+
+- `output/predict/data_coro/meshes/<stem>.vtp` — deformed heart mesh
+- `output/predict/data_coro/segmentation/<stem>.nii.gz` — mesh rasterized to image space
+
+Override paths from the command line if needed:
+
+```commandline
+linflonet predict \
+    --config config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml \
+    --folder /path/to/images \
+    -e .mha \
+    -o /path/to/output
+```
+
+**Legacy equivalent:**
+
+```commandline
+python utilities/prepare_test_data_csv.py -f data_coro -e .mha
+python utilities/predict_test_meshes.py -config config/WH/ct/flow/combined-4/predict_test_meshes_ct.yml
+```
+
+The CLI discovers images directly and does not require `index.csv`.
 
 ## Predict a single image
-
-Point `--model` at the downloaded checkpoint and set `--modality` to match your input image.
 
 ```commandline
 linflonet predict \
     --image /path/to/scan.nii.gz \
-    --model /path/to/best_model.pth \
+    --model model/best_model.pth \
     --modality ct \
     --output /path/to/output
 ```
 
-Outputs:
-
-- `<output>/meshes/<stem>.vtp` — deformed heart mesh
-- `<output>/segmentation/<stem>.nii.gz` — mesh rasterized to image space
-
-Template mesh and distance map default to files bundled with the package. Override with `--template` and `--template-distance-map` if needed.
-
-For **linear-transform-only** models (no flow/UDF stage), add `--linear-transform`.
-
-## Predict a folder of images
-
-Works with a flat folder of NIfTI files or a folder containing an `image/` subdirectory:
-
-```commandline
-linflonet predict \
-    --folder /path/to/images \
-    --model /path/to/best_model.pth \
-    --modality mr \
-    --output /path/to/output
-```
-
-Limit to the first *N* files with `-n N` (default: all).
-
-## Using a YAML config
-
-Example configs: `config/predict_single_ct.yml`, `config/predict_single_mr.yml`.
+Or with a config file:
 
 ```commandline
 linflonet predict \
@@ -112,7 +118,19 @@ linflonet predict \
     --output /path/to/output
 ```
 
-CLI flags override values in the config file (`--model`, `--modality`, `--template`, etc.).
+## Predict a folder of images
+
+Works with a flat folder of images or a folder containing an `image/` subdirectory:
+
+```commandline
+linflonet predict \
+    --folder /path/to/images \
+    --model model/best_model.pth \
+    --modality mr \
+    --output /path/to/output
+```
+
+Limit to the first *N* files with `-n N` (default: all).
 
 ## Python API
 
@@ -120,10 +138,9 @@ CLI flags override values in the config file (`--model`, `--modality`, `--templa
 from linflonet.predict import PredictionConfig, predict_images
 
 config = PredictionConfig(
-    model="/path/to/best_model.pth",
-    template="whole_heart_with_ao.vtp",  # bundled template by basename
+    model="model/best_model.pth",
+    template="data/template/whole_heart_with_ao.vtp",
     modality="ct",
-    template_distance_map="highres_template_distance.vtk",
 )
 predict_images(config, ["/path/to/scan.nii.gz"], "/path/to/output")
 ```
@@ -134,7 +151,8 @@ predict_images(config, ["/path/to/scan.nii.gz"], "/path/to/output")
 |---------|------------|
 | `ModuleNotFoundError: No module named 'pytorch3d'` | Install `pytorch3d` after `torch` (see above) |
 | `ModuleNotFoundError: No module named 'torch'` during pytorch3d install | Use `--no-build-isolation` |
-| Template file not found | Use a bundled name (`whole_heart_with_ao.vtp`) or pass an absolute path with `--template` |
-| Missing `--model` / `--modality` | Download weights from [Zenodo](https://zenodo.org/records/20802633), then pass both flags or use `--config` |
+| Template file not found | Use `data/template/whole_heart_with_ao.vtp` or pass an absolute path with `--template` |
+| Missing `--model` / `--modality` | Download weights from [Zenodo](https://zenodo.org/records/20802633), place at `model/best_model.pth`, then pass both flags or use `--config` |
+| `Provide --folder/--image or set files.root_dir in --config` | Add `--folder` / `--image`, or set `files.root_dir` in the YAML config |
 
 For training, dataset preparation, and HPC setup, see the [main README](../README.md).

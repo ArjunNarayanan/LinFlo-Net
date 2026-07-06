@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import glob
+import inspect
 import os
+import tempfile
 from dataclasses import dataclass
 from typing import Iterable, Optional
 
@@ -15,7 +17,6 @@ import yaml
 import src.pre_process as pre
 import vtk_utils.vtk_utils as vtu
 from linflonet.paths import resolve_template_path
-from src.io_utils import read_image
 from src.template import Template
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -42,9 +43,11 @@ class PredictionConfig:
     template: str
     modality: str
     input_size: tuple[int, int, int] = (128, 128, 128)
-    template_distance_map: Optional[str] = None
     faceids_name: Optional[str] = None
     output_extension: str = ".nii.gz"
+    root_dir: Optional[str] = None
+    extension: str = ".nii.gz"
+    output_dir: Optional[str] = None
 
     @classmethod
     def from_yaml(cls, config_path: str) -> "PredictionConfig":
@@ -52,33 +55,37 @@ class PredictionConfig:
             config = yaml.safe_load(config_file)
 
         files = config["files"]
-        template_distance_map = files.get("template_distance_map")
+        if files.get("template_distance_map"):
+            raise ValueError(
+                "template_distance_map is not supported by the CLI; "
+                "use the combined-4 LT+flow checkpoint without a distance map."
+            )
+
         return cls(
             model=files["model"],
             template=resolve_template_path(files["template"]),
             modality=config["modality"],
             input_size=tuple(config["info"]["input_size"]),
-            template_distance_map=(
-                resolve_template_path(template_distance_map)
-                if template_distance_map
-                else None
-            ),
             faceids_name=files.get("faceids_name"),
             output_extension=files.get("output_extension", ".nii.gz"),
+            root_dir=files.get("root_dir"),
+            extension=files.get("extension", ".nii.gz"),
+            output_dir=files.get("output_dir"),
         )
 
-    @property
-    def uses_udf(self) -> bool:
-        return self.template_distance_map is not None
 
-
-def _load_template_distance_map(path: str) -> torch.Tensor:
-    ext = os.path.splitext(path)[1]
-    if ext == ".vtk":
-        return read_image(path).unsqueeze(0).to(device)
-    if ext == ".pth":
-        return torch.load(path, map_location=device, weights_only=False).to(device)
-    raise ValueError(f"Unexpected template distance file extension: {ext}")
+def _forward_deformed_coords(
+    model: torch.nn.Module, torch_img: torch.Tensor, template_coords: torch.Tensor
+) -> torch.Tensor:
+    """Run LT+flow forward. Never pass a distance map as a positional third argument."""
+    params = inspect.signature(model.forward).parameters
+    if "distance_map" in params:
+        raise ValueError(
+            f"{type(model).__name__} requires a UDF distance map, which the CLI does not support."
+        )
+    if "multiplication_factor" in params:
+        return model(torch_img, template_coords, multiplication_factor=1.0)
+    return model(torch_img, template_coords)
 
 
 class Prediction:
@@ -88,13 +95,11 @@ class Prediction:
         out_dir: str,
         model: torch.nn.Module,
         mesh_template: Template,
-        template_distance_map: Optional[torch.Tensor] = None,
     ):
         self.config = config
         self.info = {"input_size": list(config.input_size)}
         self.model = model
         self.mesh_tmplt = mesh_template
-        self.template_distance_map = template_distance_map
         self.out_dir = out_dir
         self.modality = config.modality
         self.prediction = None
@@ -102,7 +107,6 @@ class Prediction:
     def set_image_info(self, image_fn: str) -> None:
         self.image_fn = image_fn
         self.original_image = sitk.ReadImage(self.image_fn)
-        self.origin = np.array(self.original_image.GetOrigin())
         self.img_center = np.array(
             self.original_image.TransformContinuousIndexToPhysicalPoint(
                 np.array(self.original_image.GetSize()) / 2.0
@@ -142,12 +146,9 @@ class Prediction:
         torch_img = self.get_torch_image().to(device)
 
         with torch.no_grad():
-            if self.template_distance_map is not None:
-                deformed_coords = self.model(
-                    torch_img, template_coords, self.template_distance_map
-                )
-            else:
-                deformed_coords = self.model(torch_img, template_coords)
+            deformed_coords = _forward_deformed_coords(
+                self.model, torch_img, template_coords
+            )
 
         deformed_coords = deformed_coords.squeeze(0).detach().cpu().numpy()
         deformed_coords = self.scale_to_image_coordinates(deformed_coords)
@@ -162,6 +163,27 @@ class Prediction:
         )
 
 
+def _nifti_reference_path(prediction: "Prediction") -> tuple[str, Optional[str]]:
+    """Return a path to a NIfTI file describing the original image geometry.
+
+    ``vtk_write_mask_as_nifty`` reads the source image with VTK's NIfTI reader
+    purely to recover the QForm/SForm/QFac header info. That reader only
+    understands NIfTI, so for other SimpleITK-readable inputs (e.g. ``.mha``)
+    we write a temporary NIfTI copy of the original image and hand that over
+    instead. Returns ``(reference_path, temp_path_to_cleanup)``; the second
+    element is ``None`` when the original file was already NIfTI.
+    """
+    image_fn = prediction.image_fn
+    lower = image_fn.lower()
+    if lower.endswith(".nii") or lower.endswith(".nii.gz"):
+        return image_fn, None
+
+    tmp = tempfile.NamedTemporaryFile(suffix=".nii.gz", delete=False)
+    tmp.close()
+    sitk.WriteImage(prediction.original_image, tmp.name)
+    return tmp.name, tmp.name
+
+
 def _ensure_output_dirs(out_dir: str) -> None:
     os.makedirs(os.path.join(out_dir, "meshes"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "segmentation"), exist_ok=True)
@@ -172,15 +194,13 @@ def create_prediction(config: PredictionConfig, out_dir: str) -> Prediction:
         config.model, map_location=torch.device("cpu"), weights_only=False
     )["model"]
     model.to(device)
+    model.eval()
+    print(f"Loaded model: {type(model).__name__} (linear transform + flow)")
 
     template = Template.from_vtk(config.template, faceids_name=config.faceids_name)
 
-    template_distance_map = None
-    if config.template_distance_map is not None:
-        template_distance_map = _load_template_distance_map(config.template_distance_map)
-
     _ensure_output_dirs(out_dir)
-    return Prediction(config, out_dir, model, template, template_distance_map)
+    return Prediction(config, out_dir, model, template)
 
 
 def write_one_mesh(
@@ -201,9 +221,14 @@ def write_one_mesh(
         seg_fn = os.path.join(prediction.out_dir, "segmentation", filename + ".nii.gz")
         _, transform = vtu.exportSitk2VTK(prediction.original_image)
         print("Writing nifti with name:", seg_fn)
-        vtu.vtk_write_mask_as_nifty(
-            prediction.segmentation, transform, prediction.image_fn, seg_fn
-        )
+        ref_path, tmp_path = _nifti_reference_path(prediction)
+        try:
+            vtu.vtk_write_mask_as_nifty(
+                prediction.segmentation, transform, ref_path, seg_fn
+            )
+        finally:
+            if tmp_path is not None and os.path.exists(tmp_path):
+                os.remove(tmp_path)
     else:
         raise ValueError(f"Unexpected output format type: {output_extension}")
 
