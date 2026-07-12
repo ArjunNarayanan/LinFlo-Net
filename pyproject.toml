@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "linflonet"
-version = "0.5.0"
+version = "0.6.0"
 description = "Generate simulation-ready 3D heart meshes from CT and MR images"
 readme = "README.md"
 license = { text = "MIT" }

@@ -1,0 +1,10 @@
+info:
+  input_size: [128, 128, 128]
+files:
+  model: model/best_model.pth
+  template: data/template/whole_heart_with_ao.vtp
+  # Required for UDF models (UDFLinearTransformSegmentFlow). Either a .vtk image
+  # or a .pth tensor holding the template signed/unsigned distance map.
+  template_distance_map: data/template/whole_heart_with_ao_distance_map.vtk
+  output_extension: .nii.gz
+modality: ct

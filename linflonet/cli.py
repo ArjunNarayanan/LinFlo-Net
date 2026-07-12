@@ -65,6 +65,12 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Path to template mesh (.vtp). Defaults to data/template/whole_heart_with_ao.vtp.",
     )
     predict.add_argument(
+        "--distance-map",
+        dest="distance_map",
+        help="Path to template distance map (.vtk or .pth). Required for UDF models "
+        "(e.g. UDFLinearTransformSegmentFlow).",
+    )
+    predict.add_argument(
         "-e",
         "--extension",
         default=None,
@@ -100,6 +106,8 @@ def _resolve_config(args: argparse.Namespace) -> PredictionConfig:
             config.template = resolve_template_path(args.template)
         if args.output_extension:
             config.output_extension = args.output_extension
+        if args.distance_map:
+            config.template_distance_map = args.distance_map
     else:
         missing = []
         if not args.model:
@@ -119,6 +127,7 @@ def _resolve_config(args: argparse.Namespace) -> PredictionConfig:
             ),
             modality=args.modality,
             output_extension=args.output_extension,
+            template_distance_map=args.distance_map,
         )
 
     return config

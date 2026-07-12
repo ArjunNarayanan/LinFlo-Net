@@ -17,6 +17,7 @@ import yaml
 import src.pre_process as pre
 import vtk_utils.vtk_utils as vtu
 from linflonet.paths import resolve_template_path
+from src.io_utils import read_image
 from src.template import Template
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -48,6 +49,7 @@ class PredictionConfig:
     root_dir: Optional[str] = None
     extension: str = ".nii.gz"
     output_dir: Optional[str] = None
+    template_distance_map: Optional[str] = None
 
     @classmethod
     def from_yaml(cls, config_path: str) -> "PredictionConfig":
@@ -55,11 +57,6 @@ class PredictionConfig:
             config = yaml.safe_load(config_file)
 
         files = config["files"]
-        if files.get("template_distance_map"):
-            raise ValueError(
-                "template_distance_map is not supported by the CLI; "
-                "use the combined-4 LT+flow checkpoint without a distance map."
-            )
 
         return cls(
             model=files["model"],
@@ -71,18 +68,49 @@ class PredictionConfig:
             root_dir=files.get("root_dir"),
             extension=files.get("extension", ".nii.gz"),
             output_dir=files.get("output_dir"),
+            template_distance_map=files.get("template_distance_map"),
         )
+
+
+def model_needs_distance_map(model: torch.nn.Module) -> bool:
+    """Whether *model* is a UDF model whose forward expects a distance map."""
+    return "distance_map" in inspect.signature(model.forward).parameters
+
+
+def load_distance_map(path: str) -> torch.Tensor:
+    """Load a template distance map (``.vtk`` or ``.pth``) as a 4D tensor on *device*.
+
+    Matches the loading convention used during UDF training: VTK images are read
+    into a 3D tensor and given a leading channel dim, whereas ``.pth`` tensors are
+    assumed to already carry the channel dimension.
+    """
+    ext = os.path.splitext(path)[1].lower()
+    if ext == ".vtk":
+        distance_map = read_image(path).unsqueeze(0)
+    elif ext == ".pth":
+        distance_map = torch.load(path, map_location=torch.device("cpu"))
+    else:
+        raise ValueError(
+            f"Unexpected template distance map extension {ext!r}; expected .vtk or .pth"
+        )
+    return distance_map.to(device)
 
 
 def _forward_deformed_coords(
-    model: torch.nn.Module, torch_img: torch.Tensor, template_coords: torch.Tensor
+    model: torch.nn.Module,
+    torch_img: torch.Tensor,
+    template_coords: torch.Tensor,
+    distance_map: Optional[torch.Tensor] = None,
 ) -> torch.Tensor:
-    """Run LT+flow forward. Never pass a distance map as a positional third argument."""
+    """Run the LT+flow (or UDF LT+flow) forward pass and return deformed coords."""
     params = inspect.signature(model.forward).parameters
     if "distance_map" in params:
-        raise ValueError(
-            f"{type(model).__name__} requires a UDF distance map, which the CLI does not support."
-        )
+        if distance_map is None:
+            raise ValueError(
+                f"{type(model).__name__} requires a UDF distance map. Provide "
+                "files.template_distance_map in the config or --distance-map on the CLI."
+            )
+        return model(torch_img, template_coords, distance_map)
     if "multiplication_factor" in params:
         return model(torch_img, template_coords, multiplication_factor=1.0)
     return model(torch_img, template_coords)
@@ -95,6 +123,7 @@ class Prediction:
         out_dir: str,
         model: torch.nn.Module,
         mesh_template: Template,
+        distance_map: Optional[torch.Tensor] = None,
     ):
         self.config = config
         self.info = {"input_size": list(config.input_size)}
@@ -102,6 +131,7 @@ class Prediction:
         self.mesh_tmplt = mesh_template
         self.out_dir = out_dir
         self.modality = config.modality
+        self.distance_map = distance_map
         self.prediction = None
 
     def set_image_info(self, image_fn: str) -> None:
@@ -147,7 +177,7 @@ class Prediction:
 
         with torch.no_grad():
             deformed_coords = _forward_deformed_coords(
-                self.model, torch_img, template_coords
+                self.model, torch_img, template_coords, self.distance_map
             )
 
         deformed_coords = deformed_coords.squeeze(0).detach().cpu().numpy()
@@ -195,12 +225,33 @@ def create_prediction(config: PredictionConfig, out_dir: str) -> Prediction:
     )["model"]
     model.to(device)
     model.eval()
-    print(f"Loaded model: {type(model).__name__} (linear transform + flow)")
+
+    needs_distance_map = model_needs_distance_map(model)
+    model_kind = "UDF linear transform + flow" if needs_distance_map else "linear transform + flow"
+    print(f"Loaded model: {type(model).__name__} ({model_kind})")
+
+    distance_map = None
+    if config.template_distance_map:
+        distance_map = load_distance_map(config.template_distance_map)
+        print(f"Loaded template distance map: {config.template_distance_map}")
+
+    if needs_distance_map and distance_map is None:
+        raise ValueError(
+            f"{type(model).__name__} is a UDF model and requires a template distance "
+            "map. Provide files.template_distance_map in the config or --distance-map "
+            "on the CLI (a .vtk or .pth file)."
+        )
+    if distance_map is not None and not needs_distance_map:
+        print(
+            "WARNING: a template distance map was provided but the model does not use "
+            "one; ignoring it."
+        )
+        distance_map = None
 
     template = Template.from_vtk(config.template, faceids_name=config.faceids_name)
 
     _ensure_output_dirs(out_dir)
-    return Prediction(config, out_dir, model, template)
+    return Prediction(config, out_dir, model, template, distance_map=distance_map)
 
 
 def write_one_mesh(

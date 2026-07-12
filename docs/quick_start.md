@@ -132,6 +132,36 @@ linflonet predict \
 
 Limit to the first *N* files with `-n N` (default: all).
 
+## UDF models (distance-map guided flow)
+
+UDF checkpoints such as `UDFLinearTransformSegmentFlow` additionally require a
+template distance map (`.vtk` image or `.pth` tensor) that is transformed with
+the predicted linear transform before flow integration. Pass it with
+`--distance-map`:
+
+```commandline
+linflonet predict \
+    --image /path/to/scan.nii.gz \
+    --model model/best_model.pth \
+    --modality ct \
+    --distance-map data/template/whole_heart_with_ao_distance_map.vtk \
+    --output /path/to/output
+```
+
+Or set `files.template_distance_map` in a config (see
+`config/predict_single_ct_udf.yml`):
+
+```commandline
+linflonet predict \
+    --config config/predict_single_ct_udf.yml \
+    --image /path/to/scan.nii.gz \
+    --output /path/to/output
+```
+
+The distance map is only used by UDF models; if provided for a plain LT+flow
+model it is ignored with a warning, and if a UDF model is loaded without one the
+CLI raises a clear error.
+
 ## Python API
 
 ```python
@@ -143,6 +173,17 @@ config = PredictionConfig(
     modality="ct",
 )
 predict_images(config, ["/path/to/scan.nii.gz"], "/path/to/output")
+```
+
+For a UDF model, add the distance map:
+
+```python
+config = PredictionConfig(
+    model="model/best_model.pth",
+    template="data/template/whole_heart_with_ao.vtp",
+    modality="ct",
+    template_distance_map="data/template/whole_heart_with_ao_distance_map.vtk",
+)
 ```
 
 ## Troubleshooting
